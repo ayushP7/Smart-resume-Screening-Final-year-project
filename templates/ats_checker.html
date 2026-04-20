@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block title %}ATS Checker & Job Recommendations - Smart Resume Screening{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        max-width: 700px;
+        margin: 2rem auto;
+    }
+
+    .drop-sphere {
+        border: 2px dashed var(--glass-border);
+        border-radius: 24px;
+        padding: 5rem 2rem;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .drop-sphere:hover,
+    .drop-sphere.dragover {
+        border-color: var(--accent-secondary);
+        background: rgba(59, 130, 246, 0.05);
+        transform: scale(1.02);
+    }
+
+    .drop-sphere i {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        transition: transform 0.3s ease;
+    }
+
+    .drop-sphere:hover i {
+        transform: translateY(-10px);
+    }
+
+    .file-input {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .loading-pulse {
+        display: none;
+        margin-top: 2rem;
+    }
+
+    .pulse {
+        width: 12px;
+        height: 12px;
+        background-color: var(--accent-secondary);
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse 1.4s infinite ease-in-out both;
+    }
+
+    .pulse:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .pulse:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        80%,
+        100% {
+            transform: scale(0);
+        }
+
+        40% {
+            transform: scale(1.0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header" style="text-align: center; margin-bottom: 4rem;">
+    <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">ATS Checker & Job Recommendations</h2>
+    <p class="text-muted" style="max-width: 600px; margin: 0 auto;">Our advanced neural parser will dissect your resume
+        architecture to identify structural gaps, skill density, and recruitment viability.</p>
+</div>
+
+<div class="upload-container">
+    <form method="post" enctype="multipart/form-data" id="upload-form">
+        {% csrf_token %}
+        <div class="drop-sphere" id="drop-zone">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <h3 id="file-name-display">Drag & Drop Resume</h3>
+            <p class="text-muted">or click to browse your files (PDF, DOCX)</p>
+            {{ form.resume }}
+        </div>
+
+        <div style="margin-top: 3rem; text-align: center;">
+            <button type="submit" class="btn btn-primary"
+                style="padding: 1.2rem 4rem; font-size: 1.2rem; border-radius: 50px;">
+                <i class="fa-solid fa-bolt" style="margin-right: 0.5rem;"></i> Start Deep Scan
+            </button>
+            <div class="loading-pulse" id="loader">
+                <div class="pulse"></div>
+                <div class="pulse"></div>
+                <div class="pulse"></div>
+                <p class="text-muted" style="margin-top: 1rem;">Initializing neural extraction...</p>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const uploadForm = document.getElementById('upload-form');
+    const loader = document.getElementById('loader');
+
+    // Add hidden class to default file input but make it clickable via parent
+    fileInput.classList.add('file-input');
+
+    fileInput.addEventListener('change', (e) => {
+        if (fileInput.files.length > 0) {
+            fileNameDisplay.innerText = fileInput.files[0].name;
+            fileNameDisplay.style.color = 'var(--accent-secondary)';
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        }, false);
+    });
+
+    uploadForm.addEventListener('submit', () => {
+        document.querySelector('.btn-primary').style.display = 'none';
+        loader.style.display = 'block';
+    });
+</script>
+{% endblock %}

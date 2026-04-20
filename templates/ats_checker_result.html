@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block title %}ATS & Job Recommendations - Smart Resume Screening{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Advanced Grid & Layout Settings */
+.results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+    padding-bottom: 4rem;
+}
+
+.section-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #a855f7, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    max-width: 600px;
+}
+
+/* ATS Score Specific Styles */
+.ats-dashboard {
+    background: rgba(255,255,255,0.02);
+    border-radius: 24px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    padding: 3rem;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.ats-dashboard::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 5px;
+    background: linear-gradient(90deg, #a855f7, #3b82f6);
+}
+
+.score-hud {
+    display: flex;
+    align-items: center;
+    gap: 4rem;
+}
+
+/* SVG Ring Animation */
+.svg-circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 10; }
+.svg-circle { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 2s cubic-bezier(0.1, 0.7, 0.1, 1); }
+.score-circle-container { position: relative; width: 220px; height: 220px; flex-shrink: 0; }
+.score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 800; }
+
+.match-excellent { stroke: #4ade80; color: #4ade80; text-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+.match-good { stroke: #facc15; color: #facc15; text-shadow: 0 0 20px rgba(250, 204, 21, 0.4); }
+.match-poor { stroke: #f87171; color: #f87171; text-shadow: 0 0 20px rgba(248, 113, 113, 0.4); }
+
+.ats-stats {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.stat-box {
+    background: rgba(0,0,0,0.3);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+}
+.stat-box h4 { color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;}
+.stat-box .value { font-size: 1.5rem; font-weight: 600; color: var(--text-main);}
+
+/* Job Recommendation Specific Styles */
+.jobs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.job-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.job-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.job-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.05) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.job-platform-badge {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    display: flex; align-items: center; gap: 0.4rem;
+}
+
+.job-title { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-main);}
+.job-company { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;}
+
+.btn-apply {
+    display: flex; justify-content: center; align-items: center; gap: 0.5rem;
+    width: 100%; padding: 0.8rem;
+    border-radius: 8px; font-weight: 600; text-decoration: none;
+    transition: all 0.2s;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-container">
+    
+    <!-- SECTION 1: ATS SCORE ENGINE -->
+    <section>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+            <div>
+                <h2 class="section-title">Analysis & Recommendations <i class="fa-solid fa-microchip"></i></h2>
+                <p class="section-subtitle">We parsed your resume using our advanced extraction node. Here is your raw viability score and extracted data footprint.</p>
+            </div>
+            <a href="{% url 'ats_checker' %}" class="btn btn-secondary"><i class="fa-solid fa-redo"></i> Scan Another</a>
+        </div>
+
+        <div class="ats-dashboard">
+            <div class="score-hud">
+                <div class="score-circle-container" data-score="{{ parsed_data.ats_score }}">
+                    <svg viewBox="0 0 100 100" width="220" height="220">
+                        <circle class="svg-circle-bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="svg-circle 
+                        {% if parsed_data.ats_score >= 80 %}match-excellent
+                        {% elif parsed_data.ats_score > 50 %}match-good
+                        {% else %}match-poor{% endif %}" 
+                        cx="50" cy="50" r="45" 
+                        stroke-dasharray="0 283" transform="rotate(-90 50 50)"></circle>
+                    </svg>
+                    <div class="score-text 
+                        {% if parsed_data.ats_score >= 80 %}match-excellent
+                        {% elif parsed_data.ats_score > 50 %}match-good
+                        {% else %}match-poor{% endif %}">
+                        {{ parsed_data.ats_score }}%
+                    </div>
+                </div>
+
+                <div class="ats-stats">
+                    <div class="stat-box">
+                        <h4><i class="fa-solid fa-envelope" style="color:#a855f7"></i> Email Detected</h4>
+                        <div class="value">{{ parsed_data.personal_info.email|default:"Not Found" }}</div>
+                    </div>
+                    <div class="stat-box">
+                        <h4><i class="fa-solid fa-phone" style="color:#3b82f6"></i> Phone Detected</h4>
+                        <div class="value">{{ parsed_data.personal_info.phone|default:"Not Found" }}</div>
+                    </div>
+                    <div class="stat-box">
+                        <h4><i class="fa-solid fa-layer-group" style="color:#14b8a6"></i> Seniority Level</h4>
+                        <div class="value" style="text-transform: capitalize;">{{ parsed_data.seniority }}</div>
+                    </div>
+                    <div class="stat-box">
+                        <h4><i class="fa-solid fa-laptop-code" style="color:#f43f5e"></i> Core Skills Parsed</h4>
+                        <div class="value">{{ parsed_data.skills|length }} Technical Skills</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ATS BREAKDOWN FEEDBACK -->
+            {% if parsed_data.ats_breakdown %}
+            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(248, 113, 113, 0.05); border: 1px solid rgba(248, 113, 113, 0.2); border-radius: 12px;">
+                <h4 style="color: #fca5a5; margin-bottom: 1rem;"><i class="fa-solid fa-triangle-exclamation"></i> ATS Optimization Feedback (Points Lost)</h4>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    {% for issue in parsed_data.ats_breakdown %}
+                    <li style="margin-bottom: 0.8rem; color: #f8fafc; font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fa-solid fa-xmark" style="color: #f87171"></i> {{ issue }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% else %}
+            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(74, 222, 128, 0.05); border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 12px;">
+                <h4 style="color: #4ade80; margin-bottom: 0;"><i class="fa-solid fa-check-circle"></i> Perfect Score! Your resume natively hits every single structural and skill density metric.</h4>
+            </div>
+            {% endif %}
+
+            
+            <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--glass-border);">
+                <h4 style="color: var(--text-muted); margin-bottom: 1rem; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px;">Skill Density Map</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.8rem;">
+                    {% for skill in parsed_data.skills %}
+                        <span style="background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #d8b4fe; padding: 0.4rem 1rem; border-radius: 20px; font-weight: 500;">
+                            {{ skill }}
+                        </span>
+                    {% empty %}
+                        <span class="text-muted">No major tech skills detected.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- SECTION 2: JOB RECOMMENDATIONS -->
+    <section style="margin-top: 2rem;">
+        <div>
+            <h2 class="section-title">Smart Recommendations <i class="fa-solid fa-satellite-dish"></i></h2>
+            <p class="section-subtitle">Real-time targeted job suggestions compiled strictly from your extracted skills pool. Showing verified matches from LinkedIn & Naukri.</p>
+        </div>
+
+        {% if jobs %}
+            <div class="jobs-grid">
+            {% for job in jobs %}
+                <div class="job-card">
+                    <div class="job-platform-badge" style="background: {{ job.color }}">
+                        <i class="{{ job.icon }}"></i> {{ job.platform }}
+                    </div>
+                    <h3 class="job-title">{{ job.title }}</h3>
+                    <div class="job-company">
+                        <i class="fa-solid fa-building"></i> {{ job.company }}
+                    </div>
+                    
+                    <a href="{{ job.url }}" target="_blank" class="btn-apply" style="background: rgba(255,255,255,0.05); border: 1px solid {{ job.color }}; color: var(--text-main);">
+                        Apply on {{ job.platform }} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.8rem; color: {{ job.color }};"></i>
+                    </a>
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="glass-panel" style="text-align: center; padding: 4rem;">
+                <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                <h3>No Targetable Skills Found</h3>
+                <p class="text-muted">Please ensure your resume clearly lists the technologies you work with so we can fetch targeted roles.</p>
+            </div>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const circleContainer = document.querySelector('.score-circle-container');
+        if (circleContainer) {
+            const score = parseInt(circleContainer.getAttribute('data-score'));
+            if(isNaN(score)) return;
+            const circle = circleContainer.querySelector('.svg-circle');
+            const radius = circle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+            
+            const offset = circumference - (score / 100) * circumference;
+            setTimeout(() => {
+                circle.style.strokeDasharray = `${circumference - offset} ${circumference}`;
+            }, 300);
+        }
+    });
+</script>
+{% endblock %}

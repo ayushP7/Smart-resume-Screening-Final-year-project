@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Match Report - Smart Resume Screening{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 3rem;
+        margin-top: 2rem;
+    }
+    
+    .score-summary-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 3rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .score-summary-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 6px;
+        background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    }
+
+    /* Large Score Ring */
+    .score-ring-container {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        margin: 2rem auto;
+    }
+    .svg-ring-bg { fill: none; stroke: rgba(0,0,0,0.05); stroke-width: 10; }
+    :root[data-theme="dark"] .svg-ring-bg { stroke: rgba(255,255,255,0.05); }
+    .svg-ring { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 2.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+    .ring-text {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        font-weight: 800;
+    }
+
+    .status-excellent { stroke: #4ade80; color: #4ade80; text-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+    .status-good { stroke: #facc15; color: #facc15; text-shadow: 0 0 20px rgba(250, 204, 21, 0.4); }
+    .status-poor { stroke: #f87171; color: #f87171; text-shadow: 0 0 20px rgba(248, 113, 113, 0.4); }
+
+    /* Breakdown Bars */
+    .metric-row { margin-bottom: 1.5rem; }
+    .metric-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
+    .progress-track { background: rgba(255,255,255,0.05); height: 8px; border-radius: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 10px; transition: width 1.5s ease-out; }
+
+    /* Skill Tags */
+    .skill-wall {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 3rem;
+    }
+    .tag-container {
+        background: var(--glass-bg);
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 1px solid var(--glass-border);
+    }
+    .chip {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin: 0.3rem;
+    }
+    .chip-matched { background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2); }
+    .chip-missing { background: rgba(248, 113, 113, 0.1); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem;">
+    <div>
+        <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Match Compatibility Analysis</h2>
+        <p class="text-muted">High-precision evaluation between your technical profile and requirements.</p>
+    </div>
+    <a href="{% url 'jd_matcher' %}" class="btn btn-secondary" style="border-radius: 50px; padding: 0.8rem 2rem;">
+        <i class="fa-solid fa-rotate-left"></i> Rethink Comparison
+    </a>
+</div>
+
+<div class="report-grid">
+    <!-- LEFT: Score Hud -->
+    <div class="score-summary-card">
+        <h3 style="color: var(--text-muted); font-size: 1rem; text-transform: uppercase; letter-spacing: 2px;">Overall Viability</h3>
+        
+        <div class="score-ring-container" data-score="{{ match_result.score }}">
+            <svg viewBox="0 0 100 100">
+                <circle class="svg-ring-bg" cx="50" cy="50" r="45"></circle>
+                <circle class="svg-ring 
+                {% if match_result.score >= 75 %}status-excellent
+                {% elif match_result.score > 50 %}status-good
+                {% else %}status-poor{% endif %}" 
+                cx="50" cy="50" r="45" 
+                stroke-dasharray="0 283" transform="rotate(-90 50 50)"></circle>
+            </svg>
+            <div class="ring-text 
+                {% if match_result.score >= 75 %}status-excellent
+                {% elif match_result.score > 50 %}status-good
+                {% else %}status-poor{% endif %}">
+                {{ match_result.score }}<span style="font-size:1.5rem">%</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem; padding: 1.5rem; background: rgba(0,0,0,0.03); border-radius: 12px;">
+            <p style="font-size: 1.1rem; line-height: 1.6;">
+                {% if match_result.score >= 75 %}
+                    <span style="color: #4ade80; font-weight: bold;">Elite Match!</span> You are a perfect candidate for this position based on technical alignment.
+                {% elif match_result.score > 50 %}
+                    <span style="color: #facc15; font-weight: bold;">Strong Potential.</span> You have the core foundations but may need to sharpen a few niche areas.
+                {% else %}
+                    <span style="color: #f87171; font-weight: bold;">Gap Identified.</span> This role significantly differs from your current resume data. Consider bridging the skill gap.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- RIGHT: Analytics Breakdown -->
+    <div class="glass-panel" style="padding: 2.5rem;">
+        <h3 style="margin-bottom: 2rem;"><i class="fa-solid fa-sliders"></i> Weighted Breakdown</h3>
+        
+        {% for metric, value in match_result.breakdown.items %}
+            <div class="metric-row">
+                <div class="metric-label">
+                    <span style="text-transform: capitalize; font-weight: 500;">{{ metric|replace:'_, ' }}</span>
+                    <span style="color: var(--text-main)">{{ value }} pts</span>
+                </div>
+                <div class="progress-track">
+                    {% if metric == 'technical_skills' %}
+                        <div class="progress-fill" style="width: {% widthratio value 40 100 %}%; background: #a855f7"></div>
+                    {% elif metric == 'soft_skills' or metric == 'keyword_match' or metric == 'experience_level' %}
+                        <div class="progress-fill" style="width: {% widthratio value 15 100 %}%; background: #3b82f6"></div>
+                    {% elif metric == 'education_level' %}
+                        <div class="progress-fill" style="width: {% widthratio value 10 100 %}%; background: #14b8a6"></div>
+                    {% else %}
+                        <div class="progress-fill" style="width: {% widthratio value 5 100 %}%; background: #f43f5e"></div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="skill-wall">
+    <div class="tag-container">
+        <h4 style="margin-bottom: 1.5rem; color: #4ade80;"><i class="fa-solid fa-circle-check"></i> Requirement Alignment</h4>
+        <div>
+            {% for skill in match_result.matched %}
+                <span class="chip chip-matched">{{ skill }}</span>
+            {% empty %}
+                <p class="text-muted">No specific technical overlap detected.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="tag-container">
+        <h4 style="margin-bottom: 1.5rem; color: #f87171;"><i class="fa-solid fa-circle-xmark"></i> Missing Competencies</h4>
+        <div>
+            {% for skill in match_result.missing %}
+                <span class="chip chip-missing">{{ skill }}</span>
+            {% empty %}
+                <p class="text-muted">You have 100% skill coverage for this JD!</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ring = document.querySelector('.score-ring-container');
+        if (ring) {
+            const score = parseInt(ring.getAttribute('data-score'));
+            const circle = ring.querySelector('.svg-ring');
+            const radius = circle.r.baseVal.value;
+            const circumference = 2 * Math.PI * radius;
+            
+            const offset = circumference - (score / 100) * circumference;
+            setTimeout(() => {
+                circle.style.strokeDasharray = `${circumference - offset} ${circumference}`;
+            }, 500);
+        }
+    });
+</script>
+{% endblock %}

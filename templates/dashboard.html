@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Smart Resume Screening{% endblock %}
+
+{% block content %}
+
+{% if show_welcome %}
+<!-- Cinematic Welcome Overlay -->
+<div id="welcome-overlay">
+    <div class="overlay-content">
+        <h1 class="glitch-text">Smart Resume Screening</h1>
+        <div class="enter-prompt">
+            Press <span class="key-cap">ENTER</span> to begin
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="dashboard-wrapper">
+    <!-- Header Section -->
+    <div class="dash-header" style="text-align: center; display: block; margin-bottom: 4rem;">
+        <div class="welcome-text">
+            <h2 style="font-size: 2.8rem; margin-bottom: 1rem;">Experience the Future of Recruitment</h2>
+            <p style="font-size: 1.2rem; max-width: 800px; margin: 0 auto; color: var(--text-muted);">Our enterprise-grade AI suite empowers candidates to dismantle recruitment barriers. Optimize, Match, and Get Hired with precision engineering.</p>
+        </div>
+    </div>
+
+    <!-- Services Hub Grid -->
+    <div class="services-grid">
+        <!-- Service 1: ATS Checker -->
+        <div class="service-card glass-panel">
+            <div class="service-icon-glow purple">
+                <i class="fa-solid fa-file-shield"></i>
+            </div>
+            <h3>ATS Analysis Engine</h3>
+            <p>Our neural parser dissects your resume architecture, identifying structural gaps and skill density to ensure you bypass automated filters with a perfect score.</p>
+            <ul class="service-features">
+                <li><i class="fa-solid fa-check"></i> Deep Structural Audit</li>
+                <li><i class="fa-solid fa-check"></i> Skill Density Mapping</li>
+                <li><i class="fa-solid fa-check"></i> Recruitment Viability Score</li>
+            </ul>
+            <a href="{% url 'ats_checker' %}" class="service-cta purple">Start Deep Scan <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <!-- Service 2: Job Recommendations -->
+        <div class="service-card glass-panel">
+            <div class="service-icon-glow blue">
+                <i class="fa-solid fa-satellite-dish"></i>
+            </div>
+            <h3>Smart Recommender</h3>
+            <p>Skip the manual search. We aggregate live opportunities from LinkedIn and Naukri, filtered strictly by your extracted skill profile to maximize placement speed.</p>
+            <ul class="service-features">
+                <li><i class="fa-solid fa-check"></i> Multi-Portal Aggregation</li>
+                <li><i class="fa-solid fa-check"></i> Verified Skill Matching</li>
+                <li><i class="fa-solid fa-check"></i> Real-time Opportunity Feed</li>
+            </ul>
+            <!-- In our current structure, recommendations come after ATS scan, but we'll link to the scanner as the entry point -->
+            <a href="{% url 'ats_checker' %}" class="service-cta blue">Find Opportunities <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+
+        <!-- Service 3: JD Matcher -->
+        <div class="service-card glass-panel">
+            <div class="service-icon-glow emerald">
+                <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+            <h3>Precision JD Matcher</h3>
+            *<p>Battle-test your resume against specific job requirements. We provide a weighted multi-factor score including soft skills, education, and domain alignment.</p>
+            <ul class="service-features">
+                <li><i class="fa-solid fa-check"></i> Weighted Match Score</li>
+                <li><i class="fa-solid fa-check"></i> Missing Skill Breakdown</li>
+                <li><i class="fa-solid fa-check"></i> Experience Gap Analysis</li>
+            </ul>
+            <a href="{% url 'jd_matcher' %}" class="service-cta emerald">Analyze Compatibility <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Dashboard Hub Styles */
+    .dashboard-wrapper {
+        padding: 2rem 0;
+        animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2.5rem;
+    }
+
+    .service-card {
+        padding: 3rem 2rem !important;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .service-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        border-color: var(--accent-primary);
+    }
+
+    .service-icon-glow {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .service-icon-glow.purple { background: rgba(168, 85, 247, 0.1); color: #a855f7; box-shadow: 0 0 30px rgba(168, 85, 247, 0.2); }
+    .service-icon-glow.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; box-shadow: 0 0 30px rgba(59, 130, 246, 0.2); }
+    .service-icon-glow.emerald { background: rgba(16, 185, 129, 0.1); color: #10b981; box-shadow: 0 0 30px rgba(16, 185, 129, 0.2); }
+
+    .service-card h3 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #fff;
+    }
+
+    :root[data-theme="light"] .service-card h3 { color: var(--text-main); }
+
+    .service-card p {
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+    }
+
+    .service-features {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 2.5rem;
+        text-align: left;
+        width: 100%;
+    }
+
+    .service-features li {
+        margin-bottom: 0.8rem;
+        color: var(--text-main);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .service-features li i { color: #4ade80; font-size: 0.8rem; }
+
+    .service-cta {
+        margin-top: auto;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        transition: all 0.3s;
+    }
+
+    .service-cta.purple { background: rgba(168, 85, 247, 0.1); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .service-cta.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .service-cta.emerald { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .service-cta:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+    /* Theme Overrides */
+    :root[data-theme="light"] .service-card {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(15, 23, 42, 0.1);
+    }
+</style>
+
+<style>
+    /* Splash Screen Styles */
+    #welcome-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a0f 100%);
+        z-index: 10000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #welcome-overlay.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(1.1);
+    }
+    .overlay-content { text-align: center; }
+    .glitch-text {
+        font-size: 5rem;
+        font-weight: 800;
+        background: linear-gradient(to right, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 2rem;
+        letter-spacing: -1px;
+    }
+    .enter-prompt {
+        font-size: 1.5rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        animation: pulse 2s infinite;
+    }
+    .key-cap {
+        background: #334155;
+        padding: 0.2rem 0.8rem;
+        border-radius: 6px;
+        border: 1px solid #475569;
+        box-shadow: 0 4px 0 #1e293b;
+        color: white;
+        font-weight: bold;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-wrapper {
+        animation: slideUp 0.6s ease-out;
+    }
+    .dash-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+    }
+    .welcome-text h2 { font-size: 2rem; font-weight: 700; }
+    
+    /* Upload Hero (Photo 2 style) */
+    .upload-hero {
+        text-align: center;
+        padding: 5rem 2rem !important;
+        margin-bottom: 2rem;
+    }
+    .hero-icon { font-size: 3rem; color: var(--accent-secondary); margin-bottom: 1.5rem; }
+    .upload-hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 1rem; }
+    .upload-hero p { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 3rem; }
+    
+    .upload-zone {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 3rem;
+        border: 2px dashed var(--glass-border);
+        border-radius: 20px;
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s;
+        background: rgba(255,255,255,0.01);
+    }
+    .upload-zone:hover {
+        border-color: var(--accent-secondary);
+        background: rgba(59, 130, 246, 0.05);
+        transform: translateY(-5px);
+    }
+    .cloud-icon { font-size: 3.5rem; color: #64748b; margin-bottom: 1rem; }
+
+    /* Results Dashboard (Photo 3 Style) */
+    .results-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .score-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem !important;
+    }
+    .score-container { margin: 2rem 0; }
+    .circular-progress {
+        width: 180px;
+        height: 180px;
+        border-radius: 50%;
+        background: conic-gradient(var(--accent-secondary) calc(0 * 1%), #1e293b 0deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 1.5s ease-out;
+    }
+    .inner-circle {
+        width: 150px;
+        height: 150px;
+        background: #0f172a;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .score-value { font-size: 3rem; font-weight: 800; color: white; }
+    .score-label { font-size: 1rem; color: var(--text-muted); }
+
+    .details-card { padding: 2.5rem !important; }
+    .details-card h3 { margin-bottom: 1.5rem; font-size: 1.4rem; }
+    .details-list { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
+    .detail-item { display: flex; align-items: center; gap: 1rem; color: #cbd5e1; }
+    .detail-item i { color: var(--accent-secondary); width: 20px; }
+
+    .skills-section { margin-bottom: 1.5rem; }
+    .skills-section h4 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 1rem; }
+    .pill-container { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .skill-pill {
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .skill-pill.matched { background: rgba(30, 41, 59, 0.5); border: 1px solid #475569; color: #e2e8f0; }
+    .skill-pill.missing { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #fca5a5; }
+
+    /* Job Recommendations */
+    .recommendation-section { padding: 2rem !important; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .badge { background: var(--accent-primary); padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+    
+    .recommendation-list { display: flex; flex-direction: column; gap: 1rem; }
+    .job-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        transition: all 0.3s;
+    }
+    .job-card:hover { border-color: var(--accent-secondary); transform: translateX(5px); }
+    .job-info h4 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+    .job-info .company { color: var(--text-muted); font-size: 0.9rem; }
+    .job-meta { display: flex; align-items: center; gap: 1.5rem; }
+    .match-badge { font-weight: 800; font-size: 1.1rem; }
+    .match-badge.high { color: #4ade80; }
+    .match-badge.mid { color: #facc15; }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const overlay = document.getElementById('welcome-overlay');
+    
+    // 1. Splash Screen Logic
+    if(overlay) {
+        document.addEventListener('keydown', function hideOverlay(e) {
+            if(e.key === 'Enter') {
+                overlay.classList.add('hidden');
+                setTimeout(() => overlay.remove(), 800);
+                document.removeEventListener('keydown', hideOverlay);
+                // Trigger score animation after overlay is gone
+                setTimeout(animateScore, 200);
+            }
+        });
+    } else {
+        animateScore();
+    }
+
+    // 2. Score Ring Animation
+    function animateScore() {
+        const progressCircle = document.querySelector('.circular-progress');
+        if(!progressCircle) return;
+        
+        const targetScore = parseInt(progressCircle.getAttribute('data-score')) || 0;
+        const scoreValue = document.querySelector('.score-value');
+        let currentScore = 0;
+        
+        const interval = setInterval(() => {
+            if(currentScore >= targetScore) {
+                clearInterval(interval);
+            } else {
+                currentScore++;
+                scoreValue.innerText = currentScore + '%';
+                progressCircle.style.background = `conic-gradient(var(--accent-secondary) ${currentScore * 3.6}deg, #1e293b 0deg)`;
+            }
+        }, 20);
+    }
+});
+</script>
+{% endblock %}
