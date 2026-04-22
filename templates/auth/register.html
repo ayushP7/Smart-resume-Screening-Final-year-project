@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="auth-container">
-    <div class="glass-panel auth-card">
+    <div class="auth-card glass-panel">
         <div class="auth-header">
             <div class="auth-icon-circle">
                 <i class="fa-solid fa-user-plus"></i>
@@ -12,15 +12,15 @@
             <h2>Create Account</h2>
             <p class="text-muted">Join the next generation of career tools</p>
         </div>
-        
+
         <form method="post" class="auth-form">
             {% csrf_token %}
-            
+
             {% if form.non_field_errors %}
                 {% for error in form.non_field_errors %}
-                    <div class="alert alert-error">
-                        {{ error }}
-                    </div>
+                <div class="alert alert-error">
+                    <i class="fa-solid fa-triangle-exclamation"></i> {{ error }}
+                </div>
                 {% endfor %}
             {% endif %}
 
@@ -38,12 +38,12 @@
                 {% endif %}
             </div>
             {% endfor %}
-            
-            <button type="submit" class="btn btn-primary btn-block">
-                Create Account <i class="fa-solid fa-chevron-right" style="margin-left: 0.5rem;"></i>
+
+            <button type="submit" class="btn btn-primary auth-submit-btn">
+                Create Account <i class="fa-solid fa-chevron-right"></i>
             </button>
         </form>
-        
+
         <div class="auth-footer">
             <p>Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
         </div>
@@ -52,130 +52,75 @@
 
 <style>
     .auth-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: calc(100vh - 6rem);
-        padding: 1.5rem;
+        display: flex; justify-content: center; align-items: center;
+        min-height: calc(100vh - 8rem); padding: 2rem;
     }
     .auth-card {
-        width: 100%;
-        max-width: 420px;
-        padding: 2.2rem !important;
+        width: 100%; max-width: 460px; padding: 3rem !important;
         animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-        border-bottom: 4px solid var(--accent-primary);
-        border-radius: 20px;
-    }
-    
-    :root[data-theme="light"] .auth-card {
-        background: #ffffff;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-top: 4px solid var(--accent-primary);
+        overflow: visible;
     }
     .auth-header {
-        text-align: center;
-        margin-bottom: 2rem;
+        text-align: center; margin-bottom: 2.5rem;
     }
     .auth-icon-circle {
-        width: 50px;
-        height: 50px;
+        width: 64px; height: 64px;
         background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        border-radius: 12px; /* Slightly squared circles for modern look */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem;
-        font-size: 1.2rem;
-        color: white;
-        box-shadow: 0 8px 16px rgba(126, 34, 206, 0.25);
+        border-radius: 18px; display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.2rem; font-size: 1.5rem; color: white;
+        box-shadow: 0 12px 24px rgba(126, 34, 206, 0.3);
     }
-    .auth-header h2 {
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin-bottom: 0.3rem;
-        letter-spacing: -0.5px;
-    }
-    .auth-form .form-group {
-        margin-bottom: 1.2rem;
-    }
+    .auth-header h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.4rem; }
+
+    .auth-form .form-group { margin-bottom: 1.3rem; }
     .auth-form .form-group label {
-        display: block;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        opacity: 0.9;
+        display: block; font-size: 0.85rem; font-weight: 600;
+        margin-bottom: 0.5rem; color: var(--text-muted);
     }
-    .auth-form input {
-        width: 100%;
-        background: var(--panel-bg);
-        border: 1.5px solid var(--glass-border);
-        border-radius: 10px;
-        color: var(--text-main);
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
+
+    /* Style all Django-rendered inputs */
+    .auth-form input[type="text"],
+    .auth-form input[type="password"],
+    .auth-form input[type="email"] {
+        width: 100%; background: var(--panel-bg); border: 1.5px solid var(--glass-border);
+        border-radius: 12px; color: var(--text-main); padding: 0.85rem 1rem;
+        font-size: 0.95rem; font-family: inherit; transition: all 0.2s ease;
+        box-sizing: border-box;
     }
-    
+    .auth-form input[type="text"]:focus,
+    .auth-form input[type="password"]:focus,
+    .auth-form input[type="email"]:focus {
+        outline: none; border-color: var(--accent-primary);
+        box-shadow: 0 0 0 4px rgba(126, 34, 206, 0.12); background: var(--card-bg);
+    }
     :root[data-theme="dark"] .auth-form input {
-        background: rgba(15, 23, 42, 0.6);
-        border-color: rgba(255, 255, 255, 0.1);
+        background: rgba(15, 23, 42, 0.5); border-color: rgba(255, 255, 255, 0.08);
     }
-    .auth-form input:focus {
-        outline: none;
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.15);
-        background: var(--card-bg);
-    }
+
     .field-error {
-        color: #ef4444;
-        font-size: 0.8rem;
-        margin-top: 0.35rem;
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-weight: 500;
+        color: #ef4444; font-size: 0.8rem; margin-top: 0.4rem;
+        display: flex; align-items: center; gap: 0.4rem; font-weight: 500;
     }
     .form-help {
-        display: block;
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        margin-top: 0.35rem;
-        line-height: 1.4;
+        display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.4;
     }
-    .btn-block {
-        width: 100%;
-        padding: 0.85rem;
-        font-size: 1rem;
-        font-weight: 600;
-        margin-top: 1.2rem;
-        border-radius: 10px;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        color: white;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(126, 34, 206, 0.2);
-    }
-    .btn-block:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(126, 34, 206, 0.3);
+
+    .auth-submit-btn {
+        width: 100%; padding: 1rem; font-size: 1rem; border-radius: 12px;
+        margin-top: 0.5rem; justify-content: center;
     }
     .auth-footer {
-        text-align: center;
-        margin-top: 1.5rem;
-        font-size: 0.9rem;
-        color: var(--text-muted);
-        border-top: 1px solid var(--glass-border);
-        padding-top: 1.5rem;
+        text-align: center; margin-top: 2rem; font-size: 0.9rem; color: var(--text-muted);
+        border-top: 1px solid var(--glass-border); padding-top: 1.5rem;
     }
     .auth-footer a {
-        color: var(--accent-primary);
-        text-decoration: none;
-        font-weight: 700;
-        transition: color 0.3s;
+        color: var(--accent-primary); text-decoration: none; font-weight: 700; transition: color 0.2s;
     }
+    .auth-footer a:hover { color: var(--accent-secondary); text-decoration: underline; }
+
     @keyframes fadeInScale {
-        0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+        0%   { opacity: 0; transform: translateY(16px) scale(0.97); }
         100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 </style>

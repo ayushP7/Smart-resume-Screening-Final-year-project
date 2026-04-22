@@ -2,176 +2,8 @@
 
 {% block title %}ATS & Job Recommendations - Smart Resume Screening{% endblock %}
 
-{% block extra_css %}
-<style>
-/* Advanced Grid & Layout Settings */
-.results-container {
-    display: flex;
-    flex-direction: column;
-    gap: 4rem;
-    padding-bottom: 4rem;
-}
-
-.section-title {
-    font-size: 2.2rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, #a855f7, #60a5fa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: inline-block;
-}
-
-.section-subtitle {
-    font-size: 1.1rem;
-    color: var(--text-muted);
-    margin-bottom: 2rem;
-    max-width: 600px;
-}
-
-/* ATS Score Specific Styles */
-.ats-dashboard {
-    background: var(--panel-bg);
-    border-radius: 24px;
-    border: 1px solid rgba(168, 85, 247, 0.2);
-    padding: 3rem;
-    box-shadow: var(--glass-shadow);
-    position: relative;
-    overflow: hidden;
-}
-
-:root[data-theme="light"] .ats-dashboard {
-    border: 2px solid var(--glass-border); 
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.ats-dashboard::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 5px;
-    background: linear-gradient(90deg, #a855f7, #3b82f6);
-}
-
-.score-hud {
-    display: flex;
-    align-items: center;
-    gap: 4rem;
-}
-
-/* SVG Ring Animation */
-.svg-circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 10; }
-:root[data-theme="light"] .svg-circle-bg { stroke: #e2e8f0; }
-.svg-circle { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 2s cubic-bezier(0.1, 0.7, 0.1, 1); }
-.score-circle-container { position: relative; width: 220px; height: 220px; flex-shrink: 0; }
-.score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3.5rem; font-weight: 800; }
-
-.match-excellent { stroke: #10b981; color: #10b981; }
-.match-good { stroke: #f59e0b; color: #f59e0b; }
-.match-poor { stroke: #ef4444; color: #ef4444; }
-
-:root[data-theme="dark"] .match-excellent { text-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
-:root[data-theme="dark"] .match-good { text-shadow: 0 0 20px rgba(250, 204, 21, 0.4); }
-:root[data-theme="dark"] .match-poor { text-shadow: 0 0 20px rgba(248, 113, 113, 0.4); }
-
-.ats-stats {
-    flex-grow: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-}
-
-.stat-box {
-    background: var(--card-bg);
-    padding: 1.5rem;
-    border-radius: 16px;
-    border: 1px solid var(--glass-border);
-}
-:root[data-theme="light"] .stat-box {
-    border-width: 2px;
-}
-.stat-box h4 { color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;}
-.stat-box .value { font-size: 1.5rem; font-weight: 600; color: var(--text-main);}
-
-/* Job Recommendation Specific Styles */
-.jobs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
-    max-height: 1000px;
-    overflow-y: auto;
-    padding: 1rem;
-    background: rgba(255,255,255,0.02);
-    border-radius: 20px;
-}
-.jobs-grid::-webkit-scrollbar { width: 8px; }
-.jobs-grid::-webkit-scrollbar-thumb { background: var(--accent-secondary); border-radius: 10px; }
-
-
-.job-card {
-    background: var(--card-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
-}
-:root[data-theme="light"] .job-card {
-    border-width: 2px;
-}
-
-.job-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(96, 165, 250, 0.5);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.job-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle at 100% 0%, rgba(255,255,255,0.05) 0%, transparent 60%);
-    pointer-events: none;
-}
-
-.job-platform-badge {
-    position: absolute;
-    top: 1rem; right: 1rem;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #fff;
-    display: flex; align-items: center; gap: 0.4rem;
-}
-
-.job-title { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-main);}
-.job-company { display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;}
-
-.btn-apply {
-    display: flex; justify-content: center; align-items: center; gap: 0.5rem;
-    width: 100%; padding: 0.8rem;
-    border-radius: 8px; font-weight: 600; text-decoration: none;
-    transition: all 0.2s;
-}
-
-.feedback-panel { margin-top: 2rem; padding: 1.5rem; border-radius: 12px; border: 1px solid transparent; }
-.feedback-panel.warning { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
-.feedback-panel.warning h4 { color: #f87171; margin-bottom: 1rem; }
-.feedback-panel.warning ul { list-style: none; padding: 0; }
-.feedback-panel.warning li { color: var(--text-main); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.95rem; }
-.feedback-panel.warning li i { color: #f87171; }
-
-.feedback-panel.success { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #10b981; }
-
-:root[data-theme="light"] .feedback-panel.warning h4 { color: #dc2626; }
-:root[data-theme="light"] .feedback-panel.success { color: #059669; }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="results-container">
+<div class="results-container animate-in">
     
     <!-- SECTION 1: ATS SCORE ENGINE -->
     <section>
@@ -183,7 +15,7 @@
             <a href="{% url 'ats_checker' %}" class="btn btn-secondary"><i class="fa-solid fa-redo"></i> Scan Another</a>
         </div>
 
-        <div class="ats-dashboard">
+        <div class="ats-dashboard glass-panel" data-accent>
             <div class="score-hud">
                 <div class="score-circle-container" data-score="{{ parsed_data.ats_score }}">
                     <svg viewBox="0 0 100 100" width="220" height="220">
@@ -257,7 +89,7 @@
 
 
     <!-- SECTION 2: JOB RECOMMENDATIONS -->
-    <section style="margin-top: 2rem;">
+    <section style="margin-top: 4rem;">
         <div>
             <h2 class="section-title">Smart Recommendations <i class="fa-solid fa-satellite-dish"></i></h2>
             <p class="section-subtitle">Real-time targeted job suggestions compiled strictly from your extracted skills pool. Showing verified matches from LinkedIn & Naukri.</p>
@@ -267,16 +99,15 @@
             <div class="jobs-grid">
             {% for job in jobs %}
                 <div class="job-card">
-                    <div class="job-platform-badge" style="background: {{ job.color }}">
+                    <div class="job-platform-badge" style="background: {{ job.color }}; position: absolute; top: 1rem; right: 1rem; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; color: #fff;">
                         <i class="{{ job.icon }}"></i> {{ job.platform }}
                     </div>
-                    <h3 class="job-title">{{ job.title }}</h3>
-                    <div class="job-company">
+                    <h3 class="job-title" style="font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem;">{{ job.title }}</h3>
+                    <div class="job-company" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
                         <i class="fa-solid fa-building"></i> {{ job.company }}
                     </div>
-
                     
-                    <a href="{{ job.url }}" target="_blank" class="btn-apply" style="border: 2px solid {{ job.color }};">
+                    <a href="{{ job.url }}" target="_blank" class="btn btn-apply" style="border: 2px solid {{ job.color }}; width: 100%; display: flex; justify-content: center; align-items: center; gap: 0.5rem; padding: 0.8rem; border-radius: 8px; font-weight: 600; text-decoration: none;">
                         Apply on {{ job.platform }} <i class="fa-solid fa-up-right-from-square" style="font-size: 0.8rem; color: {{ job.color }};"></i>
                     </a>
                 </div>
@@ -292,6 +123,30 @@
     </section>
 
 </div>
+
+<style>
+    /* Section specific styles */
+    .section-title {
+        font-size: 2.2rem; font-weight: 700; margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #a855f7, #60a5fa);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        display: inline-block;
+    }
+    .section-subtitle { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem; max-width: 600px; }
+    
+    .ats-stats { flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    .stat-box { background: var(--card-bg); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--glass-border); }
+    .stat-box h4 { color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;}
+    .stat-box .value { font-size: 1.5rem; font-weight: 600; color: var(--text-main);}
+
+    .match-excellent { stroke: #10b981; color: #10b981; }
+    .match-good { stroke: #f59e0b; color: #f59e0b; }
+    .match-poor { stroke: #ef4444; color: #ef4444; }
+    
+    :root[data-theme="dark"] .match-excellent { text-shadow: 0 0 20px rgba(74, 222, 128, 0.4); }
+    :root[data-theme="dark"] .match-good { text-shadow: 0 0 20px rgba(250, 204, 21, 0.4); }
+    :root[data-theme="dark"] .match-poor { text-shadow: 0 0 20px rgba(248, 113, 113, 0.4); }
+</style>
 {% endblock %}
 
 {% block extra_js %}

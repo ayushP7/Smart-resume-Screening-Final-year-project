@@ -2,179 +2,126 @@
 
 {% block title %}JD Matcher - Smart Resume Screening{% endblock %}
 
-{% block extra_css %}
-<style>
-    .matcher-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        margin-top: 2rem;
-        align-items: stretch;
-    }
-    .input-group-panel {
-        background: var(--card-bg);
-        border: 1px solid var(--glass-border);
-        border-radius: 24px;
-        padding: 2.5rem;
-        transition: all 0.3s ease;
-        box-shadow: var(--glass-shadow);
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
-    .input-group-panel.step-1 { border: 2px solid rgba(126, 34, 206, 0.3); }
-    .input-group-panel.step-2 { border: 2px solid rgba(59, 130, 246, 0.3); }
-
-    :root[data-theme="light"] .input-group-panel.step-1 { border-color: var(--accent-primary); }
-    :root[data-theme="light"] .input-group-panel.step-2 { border-color: var(--accent-secondary); }
-
-    .input-group-panel:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-    }
-    .step-header {
-        margin-bottom: 2rem;
-        min-height: 85px; /* Ensures headers stay level even with wrapping */
-    }
-    .step-header h4 {
-        margin-bottom: 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-    }
-    .step-header p {
-        font-size: 0.9rem;
-        line-height: 1.5;
-        opacity: 0.8;
-    }
-    .step-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-    }
-    .upload-zone-mini {
-        border: 3px dashed var(--glass-border);
-        border-radius: 12px;
-        padding: 2.5rem 1rem;
-        text-align: center;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-    :root[data-theme="light"] .upload-zone-mini {
-        border-color: var(--accent-primary);
-    }
-    .upload-zone-mini:hover {
-        border-color: var(--accent-primary);
-        background: rgba(126, 34, 206, 0.05);
-    }
-    .file-input-mini {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        opacity: 0; cursor: pointer;
-    }
-    textarea.form-control {
-        min-height: 250px;
-        resize: vertical;
-        background: var(--panel-bg);
-        color: var(--text-main);
-        border: 1px solid var(--glass-border);
-        font-family: inherit;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        border-radius: 12px;
-        padding: 1rem;
-    }
-    :root[data-theme="light"] textarea.form-control {
-        background: #f8fafc;
-        border: 2px solid var(--accent-secondary);
-    }
-    .analyze-btn-container {
-        margin-top: 3rem;
-        display: flex;
-        justify-content: center;
-    }
-    .analyze-btn {
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        color: white;
-        padding: 1.2rem 5rem;
-        border-radius: 50px;
-        font-size: 1.25rem;
-        font-weight: 700;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 10px 25px rgba(126, 34, 206, 0.3);
-        transition: all 0.3s ease;
-    }
-    .analyze-btn:hover {
-        transform: scale(1.05) translateY(-2px);
-        box-shadow: 0 15px 35px rgba(126, 34, 206, 0.5);
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="header" style="margin-bottom: 3rem;">
-    <h2 style="font-size: 2.2rem; background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Job Compatibility Matcher</h2>
-    <p class="text-muted">Compare your resume against specific job requirements to get a detailed compatibility breakdown across tech skills, experience, and domain knowledge.</p>
-</div>
+<div class="animate-in">
+    <div class="page-header" style="margin-bottom: 3rem;">
+        <h2 class="gradient-title">Job Compatibility Matcher</h2>
+        <p class="text-muted" style="margin-top: 0.5rem; max-width: 650px;">Compare your resume against specific job requirements to get a detailed compatibility breakdown across tech skills, experience, and domain knowledge.</p>
+    </div>
 
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="matcher-grid">
-        <div class="input-group-panel step-1">
-            <div class="step-header">
-                <h4><i class="fa-solid fa-file-invoice" style="color: var(--accent-primary);"></i> Step 1: Your Resume</h4>
-                <p class="text-muted">Upload the PDF/DOCX version of the resume you want to test.</p>
+    <form method="post" enctype="multipart/form-data" id="matcher-form">
+        {% csrf_token %}
+        <div class="matcher-grid">
+            <!-- Step 1: Resume Upload -->
+            <div class="input-group-panel step-1">
+                <div class="step-header">
+                    <div class="step-num" style="color: var(--accent-primary);">01</div>
+                    <h4><i class="fa-solid fa-file-invoice" style="color: var(--accent-primary);"></i> Your Resume</h4>
+                    <p class="text-muted">Upload the PDF/DOCX version of the resume you want to test.</p>
+                </div>
+                <div class="step-content">
+                    <div class="upload-zone-mini" id="upload-zone">
+                        <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: var(--accent-primary);"></i>
+                        <p id="file-name" class="upload-label">Click to upload resume</p>
+                        <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem;">PDF or DOCX format</p>
+                        {{ form.resume }}
+                    </div>
+                </div>
             </div>
-            <div class="step-content">
-                <div class="upload-zone-mini">
-                    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--accent-primary);"></i>
-                    <p id="file-name" style="font-weight: 500;">Click to upload resume</p>
-                    {{ form.resume }}
+
+            <!-- Step 2: Job Description -->
+            <div class="input-group-panel step-2">
+                <div class="step-header">
+                    <div class="step-num" style="color: var(--accent-secondary);">02</div>
+                    <h4><i class="fa-solid fa-align-left" style="color: var(--accent-secondary);"></i> Job Description</h4>
+                    <p class="text-muted">Paste the full text of the job description from LinkedIn, Naukri, or any portal.</p>
+                </div>
+                <div class="step-content">
+                    {{ form.job_description }}
                 </div>
             </div>
         </div>
 
-        <div class="input-group-panel step-2">
-            <div class="step-header">
-                <h4><i class="fa-solid fa-align-left" style="color: var(--accent-secondary);"></i> Step 2: Job Description</h4>
-                <p class="text-muted">Paste the full text of the job description from LinkedIn, Naukri, or any portal.</p>
-            </div>
-            <div class="step-content">
-                {{ form.job_description }}
-            </div>
+        <div class="analyze-btn-container">
+            <button type="submit" class="btn btn-primary analyze-btn" id="submit-btn">
+                <i class="fa-solid fa-microchip"></i> Calculate Compatibility
+            </button>
         </div>
-    </div>
+    </form>
+</div>
 
-    <div class="analyze-btn-container">
-        <button type="submit" class="analyze-btn">
-            <i class="fa-solid fa-microchip" style="margin-right: 0.5rem;"></i> Calculate Compatibility
-        </button>
-    </div>
-</form>
+<style>
+    .gradient-title {
+        font-size: 2.5rem; font-weight: 800;
+        background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .matcher-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; align-items: stretch;
+    }
+    .input-group-panel {
+        background: var(--card-bg); border-radius: 24px; padding: 2.5rem;
+        transition: all 0.3s ease; box-shadow: var(--glass-shadow);
+        position: relative; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .input-group-panel.step-1 { border: 2px solid rgba(126, 34, 206, 0.3); }
+    .input-group-panel.step-2 { border: 2px solid rgba(59, 130, 246, 0.3); }
+    .input-group-panel:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+
+    .step-num { font-size: 3rem; font-weight: 900; opacity: 0.15; line-height: 1; margin-bottom: 0.5rem; }
+    .step-header { margin-bottom: 1.5rem; }
+    .step-header h4 { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
+    .step-content { flex: 1; display: flex; flex-direction: column; }
+
+    .upload-zone-mini {
+        border: 2px dashed var(--glass-border); border-radius: 16px; padding: 3rem 1rem;
+        text-align: center; cursor: pointer; position: relative; overflow: hidden;
+        flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        transition: all 0.3s ease;
+    }
+    .upload-zone-mini:hover { border-color: var(--accent-primary); background: rgba(126, 34, 206, 0.05); }
+    .upload-icon { font-size: 2.5rem; margin-bottom: 1rem; transition: transform 0.3s; }
+    .upload-zone-mini:hover .upload-icon { transform: translateY(-6px); }
+    .upload-label { font-weight: 600; }
+
+    input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    
+    textarea.form-control {
+        min-height: 300px; resize: vertical; font-family: inherit; font-size: 0.95rem;
+        line-height: 1.7; border-radius: 16px; padding: 1rem 1.2rem; flex: 1;
+    }
+
+    .analyze-btn-container { margin-top: 3rem; display: flex; justify-content: center; }
+    .analyze-btn {
+        padding: 1.2rem 5rem; font-size: 1.2rem; border-radius: 50px;
+        box-shadow: 0 10px 25px rgba(126, 34, 206, 0.35);
+    }
+    .analyze-btn:hover { transform: scale(1.05) translateY(-3px) !important; }
+
+    @media (max-width: 768px) {
+        .matcher-grid { grid-template-columns: 1fr; }
+        .analyze-btn { padding: 1rem 2.5rem; width: auto; }
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     const fileInput = document.querySelector('input[type="file"]');
     const fileName = document.getElementById('file-name');
-    
-    fileInput.classList.add('file-input-mini');
-    
+
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) {
             fileName.innerText = fileInput.files[0].name;
             fileName.style.color = 'var(--accent-primary)';
         }
+    });
+
+    // Loading state on submit
+    document.getElementById('matcher-form').addEventListener('submit', () => {
+        const btn = document.getElementById('submit-btn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
+        btn.disabled = true;
     });
 </script>
 {% endblock %}
