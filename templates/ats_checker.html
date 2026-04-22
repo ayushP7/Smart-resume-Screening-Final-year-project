@@ -1,161 +1,250 @@
 {% extends 'base.html' %}
-
 {% block title %}ATS Checker & Job Recommendations - Smart Resume Screening{% endblock %}
 
-{% block extra_css %}
-<style>
-    .upload-container {
-        max-width: 700px;
-        margin: 2rem auto;
-    }
-
-    .drop-sphere {
-        border: 3px dashed var(--glass-border);
-        border-radius: 24px;
-        padding: 5rem 2rem;
-        text-align: center;
-        background: var(--panel-bg);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .drop-sphere:hover,
-    .drop-sphere.dragover {
-        border-color: var(--accent-secondary);
-        background: rgba(59, 130, 246, 0.05);
-        transform: scale(1.02);
-    }
-
-    .drop-sphere i {
-        font-size: 4rem;
-        margin-bottom: 1.5rem;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        transition: transform 0.3s ease;
-    }
-
-    .drop-sphere:hover i {
-        transform: translateY(-10px);
-    }
-
-    .file-input {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        opacity: 0;
-        cursor: pointer;
-    }
-
-    .loading-pulse {
-        display: none;
-        margin-top: 2rem;
-    }
-
-    .pulse {
-        width: 12px;
-        height: 12px;
-        background-color: var(--accent-secondary);
-        border-radius: 50%;
-        display: inline-block;
-        animation: pulse 1.4s infinite ease-in-out both;
-    }
-
-    .pulse:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-
-    .pulse:nth-child(3) {
-        animation-delay: 0.4s;
-    }
-
-    @keyframes pulse {
-
-        0%,
-        80%,
-        100% {
-            transform: scale(0);
-        }
-
-        40% {
-            transform: scale(1.0);
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="header" style="text-align: center; margin-bottom: 4rem;">
-    <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">ATS Checker & Job Recommendations</h2>
-    <p class="text-muted" style="max-width: 600px; margin: 0 auto;">Our advanced neural parser will dissect your resume
-        architecture to identify structural gaps, skill density, and recruitment viability.</p>
-</div>
+<canvas id="ats-canvas"></canvas>
 
-<div class="upload-container">
-    <form method="post" enctype="multipart/form-data" id="upload-form">
+<div class="ats-root animate-in">
+
+    <!-- Header -->
+    <div class="ats-header">
+        <div class="ats-badge"><i class="fa-solid fa-file-shield"></i> Neural ATS Engine</div>
+        <h1 class="ats-title">Resume <span class="grad-txt">Deep Scan</span></h1>
+        <p class="ats-sub">Upload your resume and our AI will parse every layer — scoring your ATS viability, mapping your skills, and surfacing targeted live job opportunities.</p>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stat-strip">
+        <div class="ss-item"><i class="fa-solid fa-brain" style="color:#a855f7"></i><div><strong>AI-Powered</strong><span>Neural parsing engine</span></div></div>
+        <div class="ss-div"></div>
+        <div class="ss-item"><i class="fa-solid fa-layer-group" style="color:#3b82f6"></i><div><strong>Multi-Factor</strong><span>Structure + Skills + Contact</span></div></div>
+        <div class="ss-div"></div>
+        <div class="ss-item"><i class="fa-solid fa-satellite-dish" style="color:#10b981"></i><div><strong>Live Jobs</strong><span>LinkedIn & Naukri</span></div></div>
+        <div class="ss-div"></div>
+        <div class="ss-item"><i class="fa-solid fa-bolt" style="color:#f59e0b"></i><div><strong>Instant</strong><span>Results in seconds</span></div></div>
+    </div>
+
+    <!-- Upload Form -->
+    <form method="post" enctype="multipart/form-data" id="ats-form">
         {% csrf_token %}
-        <div class="drop-sphere" id="drop-zone">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <h3 id="file-name-display">Drag & Drop Resume</h3>
-            <p class="text-muted">or click to browse your files (PDF, DOCX)</p>
-            {{ form.resume }}
-        </div>
+        <div class="upload-card">
+            <div class="upload-card-inner">
+                <div class="drop-sphere" id="drop-sphere">
+                    <div class="ds-bg-ring"></div>
+                    <div class="ds-content" id="ds-content">
+                        <div class="ds-icon-wrap">
+                            <i class="fa-solid fa-cloud-arrow-up ds-icon" id="ds-icon"></i>
+                        </div>
+                        <h2 class="ds-title" id="ds-title">Drop Resume Here</h2>
+                        <p class="ds-sub" id="ds-sub">or click anywhere to browse &nbsp;·&nbsp; PDF, DOCX supported</p>
+                        <div class="ds-formats">
+                            <span class="fmt-chip"><i class="fa-solid fa-file-pdf"></i> PDF</span>
+                            <span class="fmt-chip"><i class="fa-solid fa-file-word"></i> DOCX</span>
+                        </div>
+                    </div>
+                    {{ form.resume }}
+                </div>
 
-        <div style="margin-top: 3rem; text-align: center;">
-            <button type="submit" class="btn btn-primary"
-                style="padding: 1.2rem 4rem; font-size: 1.2rem; border-radius: 50px;">
-                <i class="fa-solid fa-bolt" style="margin-right: 0.5rem;"></i> Start Deep Scan
-            </button>
-            <div class="loading-pulse" id="loader">
-                <div class="pulse"></div>
-                <div class="pulse"></div>
-                <div class="pulse"></div>
-                <p class="text-muted" style="margin-top: 1rem;">Initializing neural extraction...</p>
+                <!-- File preview -->
+                <div class="file-preview hidden" id="file-preview">
+                    <div class="fp-icon"><i class="fa-solid fa-file-check"></i></div>
+                    <div class="fp-info">
+                        <div class="fp-name" id="fp-name">filename.pdf</div>
+                        <div class="fp-size" id="fp-size">—</div>
+                    </div>
+                    <button type="button" class="fp-remove" id="fp-remove"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="scan-area">
+                <button type="submit" class="scan-btn" id="scan-btn" disabled>
+                    <span id="scan-text"><i class="fa-solid fa-bolt"></i> Start Deep Scan</span>
+                    <span id="scan-loader" class="hidden"><i class="fa-solid fa-spinner fa-spin"></i> Analyzing resume…</span>
+                </button>
+                <div class="scan-hint" id="scan-hint">Upload a resume to begin</div>
             </div>
         </div>
     </form>
+
+    <!-- Feature grid -->
+    <div class="feat-grid">
+        <div class="feat-card reveal">
+            <div class="feat-ico" style="background:rgba(168,85,247,.15);color:#a855f7"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+            <h4>ATS Viability Score</h4>
+            <p>Calculates your resume's ability to pass automated filters with a 0–100 score.</p>
+        </div>
+        <div class="feat-card reveal" style="animation-delay:.08s">
+            <div class="feat-ico" style="background:rgba(59,130,246,.15);color:#3b82f6"><i class="fa-solid fa-laptop-code"></i></div>
+            <h4>Skill Density Map</h4>
+            <p>Extracts every technical skill and maps them against industry demand levels.</p>
+        </div>
+        <div class="feat-card reveal" style="animation-delay:.16s">
+            <div class="feat-ico" style="background:rgba(16,185,129,.15);color:#10b981"><i class="fa-solid fa-satellite-dish"></i></div>
+            <h4>Job Recommendations</h4>
+            <p>Fetches 30+ live, role-specific jobs matched to your extracted skill profile.</p>
+        </div>
+        <div class="feat-card reveal" style="animation-delay:.24s">
+            <div class="feat-ico" style="background:rgba(245,158,11,.15);color:#f59e0b"><i class="fa-solid fa-list-check"></i></div>
+            <h4>Optimization Tips</h4>
+            <p>Pinpoints exactly what's dragging your score down with actionable fixes.</p>
+        </div>
+    </div>
 </div>
+
+<style>
+#ats-canvas { position:fixed; inset:0; z-index:-1; pointer-events:none; }
+.ats-root { max-width:1000px; margin:0 auto; padding:2rem 0 5rem; }
+
+/* Header */
+.ats-header { text-align:center; padding:3rem 0 2.5rem; }
+.ats-badge { display:inline-flex; align-items:center; gap:.6rem; background:rgba(168,85,247,.1); border:1px solid rgba(168,85,247,.25); color:#a855f7; padding:.5rem 1.4rem; border-radius:50px; font-size:.8rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:1.5rem; }
+.ats-title { font-size:3.5rem; font-weight:900; letter-spacing:-2px; margin-bottom:1rem; }
+.grad-txt { background:linear-gradient(135deg,#a855f7,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.ats-sub { color:var(--text-muted); font-size:1.05rem; max-width:620px; margin:0 auto; line-height:1.7; }
+
+/* Stat strip */
+.stat-strip { display:flex; align-items:center; justify-content:center; gap:2rem; flex-wrap:wrap; margin:2rem 0 3rem; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:20px; padding:1.5rem 2rem; }
+.ss-item { display:flex; align-items:center; gap:.9rem; }
+.ss-item i { font-size:1.4rem; }
+.ss-item strong { display:block; font-size:.95rem; font-weight:700; }
+.ss-item span { font-size:.8rem; color:var(--text-muted); }
+.ss-div { width:1px; height:36px; background:var(--glass-border); }
+
+/* Upload card */
+.upload-card { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:28px; padding:2.5rem; margin-bottom:3rem; overflow:hidden; position:relative; }
+.upload-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; background:linear-gradient(90deg,#a855f7,#3b82f6); }
+
+/* Drop Sphere */
+.drop-sphere {
+    position:relative; border:2px dashed var(--glass-border); border-radius:24px;
+    min-height:280px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; overflow:hidden; transition:all .35s cubic-bezier(.4,0,.2,1);
+    background:var(--panel-bg);
+}
+.drop-sphere:hover, .drop-sphere.dragover { border-color:#a855f7; background:rgba(168,85,247,.04); transform:scale(1.01); }
+.drop-sphere.filled { border-color:#10b981; border-style:solid; background:rgba(16,185,129,.04); }
+.ds-bg-ring { position:absolute; width:500px; height:500px; border-radius:50%; background:radial-gradient(circle,rgba(168,85,247,.06) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; animation:breathe 4s infinite alternate; }
+@keyframes breathe { from{transform:translate(-50%,-50%) scale(.9)} to{transform:translate(-50%,-50%) scale(1.1)} }
+.ds-content { text-align:center; padding:2.5rem; position:relative; z-index:1; pointer-events:none; }
+.ds-icon-wrap { width:80px; height:80px; background:rgba(168,85,247,.12); border-radius:24px; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem; transition:transform .3s; }
+.drop-sphere:hover .ds-icon-wrap { transform:translateY(-8px) rotate(-5deg); }
+.ds-icon { font-size:2.2rem; background:linear-gradient(135deg,#a855f7,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.ds-title { font-size:1.6rem; font-weight:800; margin-bottom:.6rem; }
+.ds-sub { color:var(--text-muted); font-size:.9rem; margin-bottom:1.2rem; }
+.ds-formats { display:flex; gap:.8rem; justify-content:center; }
+.fmt-chip { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:50px; padding:.35rem 1rem; font-size:.8rem; font-weight:600; display:flex; align-items:center; gap:.4rem; }
+input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+
+/* File preview */
+.file-preview { display:flex; align-items:center; gap:1rem; background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.2); border-radius:16px; padding:1rem 1.4rem; margin-top:1.2rem; }
+.fp-icon { width:44px; height:44px; background:rgba(16,185,129,.15); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#10b981; font-size:1.3rem; }
+.fp-name { font-weight:700; color:#10b981; }
+.fp-size { font-size:.8rem; color:var(--text-muted); margin-top:.2rem; }
+.fp-remove { margin-left:auto; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1rem; padding:.3rem; transition:color .2s; }
+.fp-remove:hover { color:#f87171; }
+.hidden { display:none !important; }
+
+/* Scan button */
+.scan-area { display:flex; flex-direction:column; align-items:center; gap:1rem; padding-top:2rem; }
+.scan-btn { background:linear-gradient(135deg,#7e22ce,#3b82f6); color:#fff; border:none; padding:1.2rem 5rem; border-radius:50px; font-size:1.2rem; font-weight:800; cursor:pointer; box-shadow:0 8px 30px rgba(126,34,206,.4); transition:all .3s; }
+.scan-btn:hover:not(:disabled) { transform:translateY(-3px) scale(1.04); box-shadow:0 16px 45px rgba(126,34,206,.55); }
+.scan-btn:disabled { opacity:.4; cursor:not-allowed; box-shadow:none; }
+.scan-hint { font-size:.85rem; color:var(--text-muted); }
+
+/* Feature grid */
+.feat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; }
+.feat-card { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:20px; padding:2rem 1.5rem; text-align:center; transition:transform .3s, box-shadow .3s; }
+.feat-card:hover { transform:translateY(-8px); box-shadow:0 20px 40px rgba(0,0,0,.2); }
+.feat-ico { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; margin:0 auto 1.2rem; }
+.feat-card h4 { font-size:1rem; font-weight:700; margin-bottom:.5rem; }
+.feat-card p { font-size:.85rem; color:var(--text-muted); line-height:1.6; }
+.reveal { opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+@media (max-width:900px) { .feat-grid { grid-template-columns:1fr 1fr; } }
+@media (max-width:600px) {
+    .feat-grid { grid-template-columns:1fr; }
+    .ats-title { font-size:2.4rem; }
+    .stat-strip { flex-direction:column; gap:1rem; }
+    .ss-div { width:80%; height:1px; }
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.querySelector('input[type="file"]');
-    const fileNameDisplay = document.getElementById('file-name-display');
-    const uploadForm = document.getElementById('upload-form');
-    const loader = document.getElementById('loader');
-
-    // Add hidden class to default file input but make it clickable via parent
-    fileInput.classList.add('file-input');
-
-    fileInput.addEventListener('change', (e) => {
-        if (fileInput.files.length > 0) {
-            fileNameDisplay.innerText = fileInput.files[0].name;
-            fileNameDisplay.style.color = 'var(--accent-secondary)';
-        }
+/* Canvas */
+(function(){
+  const c=document.getElementById('ats-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  const dark=()=>document.documentElement.getAttribute('data-theme')!=='light';
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+  for(let i=0;i<70;i++) pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,a:Math.random()});
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,1.4,0,Math.PI*2);
+      ctx.fillStyle=dark()?`rgba(168,85,247,${p.a*.6})`:`rgba(124,58,237,${p.a*.15})`;ctx.fill();
     });
+    pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
+      const d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<130){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle=dark()?`rgba(168,85,247,${.12*(1-d/130)})`:`rgba(124,58,237,${.04*(1-d/130)})`;ctx.lineWidth=.6;ctx.stroke();}
+    }));
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        }, false);
-    });
+/* File upload */
+const fi=document.querySelector('input[type="file"]');
+const sphere=document.getElementById('drop-sphere');
+const fpView=document.getElementById('file-preview');
+const fpName=document.getElementById('fp-name');
+const fpSize=document.getElementById('fp-size');
+const fpRemove=document.getElementById('fp-remove');
+const scanBtn=document.getElementById('scan-btn');
+const scanHint=document.getElementById('scan-hint');
+const dsTitle=document.getElementById('ds-title');
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-        }, false);
-    });
+function fmtSize(b){return b>1024*1024?(b/1024/1024).toFixed(1)+' MB':(b/1024).toFixed(0)+' KB';}
+function setFile(f){
+  sphere.classList.add('filled');
+  fpName.textContent=f.name; fpSize.textContent=fmtSize(f.size);
+  fpView.classList.remove('hidden');
+  scanBtn.disabled=false;
+  scanHint.textContent='Ready — hit Start Deep Scan!';
+  scanHint.style.color='#10b981';
+}
+function clearFile(){
+  fi.value=''; sphere.classList.remove('filled');
+  fpView.classList.add('hidden');
+  scanBtn.disabled=true;
+  scanHint.textContent='Upload a resume to begin';
+  scanHint.style.color='';
+}
+fi.addEventListener('change',e=>{ if(e.target.files[0]) setFile(e.target.files[0]); });
+fpRemove.addEventListener('click',clearFile);
+['dragenter','dragover'].forEach(ev=>sphere.addEventListener(ev,e=>{e.preventDefault();sphere.classList.add('dragover');}));
+['dragleave','drop'].forEach(ev=>sphere.addEventListener(ev,e=>{e.preventDefault();sphere.classList.remove('dragover');}));
+sphere.addEventListener('drop',e=>{
+  const f=e.dataTransfer.files[0];
+  if(f){const dt=new DataTransfer();dt.items.add(f);fi.files=dt.files;setFile(f);}
+});
 
-    uploadForm.addEventListener('submit', () => {
-        document.querySelector('.btn-primary').style.display = 'none';
-        loader.style.display = 'block';
-    });
+/* Submit */
+document.getElementById('ats-form').addEventListener('submit',()=>{
+  document.getElementById('scan-text').classList.add('hidden');
+  document.getElementById('scan-loader').classList.remove('hidden');
+  scanBtn.disabled=true;
+});
+
+/* Reveal */
+const obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible');}),{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 </script>
 {% endblock %}
