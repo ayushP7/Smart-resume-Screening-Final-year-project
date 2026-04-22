@@ -1,189 +1,246 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
-
 {% block title %}Match Report - Smart Resume Screening{% endblock %}
 
 {% block content %}
-<div class="animate-in">
-    <!-- Page Header -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3rem; flex-wrap: wrap; gap: 1rem;">
+<canvas id="res-canvas"></canvas>
+<div class="res-root animate-in">
+
+    <!-- Top bar -->
+    <div class="res-topbar">
         <div>
-            <h2 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Match Report</h2>
-            <p class="text-muted">High-precision evaluation between your technical profile and job requirements.</p>
+            <h1 class="res-title">Compatibility <span class="grad-txt">Report</span></h1>
+            <p class="res-sub">AI-powered match analysis across 5 weighted dimensions</p>
         </div>
-        <a href="{% url 'jd_matcher' %}" class="btn btn-secondary">
-            <i class="fa-solid fa-rotate-left"></i> Re-analyze
-        </a>
+        <a href="{% url 'jd_matcher' %}" class="btn btn-secondary"><i class="fa-solid fa-rotate-left"></i> Re-analyze</a>
     </div>
 
-    <!-- Main Report Grid -->
-    <div class="report-grid">
-        <!-- LEFT: Score Card -->
-        <div class="score-summary-card glass-panel" data-accent>
-            <h3 class="card-eyebrow">Overall Viability</h3>
-            
-            <div class="score-ring-container" data-score="{{ match_result.score }}">
-                <svg viewBox="0 0 100 100" width="200" height="200">
-                    <circle class="svg-ring-bg" cx="50" cy="50" r="45"></circle>
-                    <circle class="svg-ring 
-                    {% if match_result.score >= 75 %}status-excellent
-                    {% elif match_result.score > 50 %}status-good
-                    {% else %}status-poor{% endif %}" 
-                    cx="50" cy="50" r="45" 
-                    stroke-dasharray="0 283" transform="rotate(-90 50 50)"></circle>
+    <!-- Score + Breakdown grid -->
+    <div class="score-grid">
+
+        <!-- Left: Big Score Ring -->
+        <div class="score-card reveal">
+            <div class="sc-label">Overall Compatibility</div>
+            <div class="ring-wrap" id="ring-wrap" data-score="{{ match_result.score }}">
+                <svg viewBox="0 0 200 200" class="ring-svg">
+                    <defs>
+                        <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%"   stop-color="{% if match_result.score >= 75 %}#4ade80{% elif match_result.score > 50 %}#facc15{% else %}#f87171{% endif %}"/>
+                            <stop offset="100%" stop-color="{% if match_result.score >= 75 %}#22c55e{% elif match_result.score > 50 %}#eab308{% else %}#ef4444{% endif %}"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="ring-bg" cx="100" cy="100" r="85"/>
+                    <circle class="ring-fg" id="ring-fg" cx="100" cy="100" r="85"
+                            stroke-dasharray="0 534" transform="rotate(-90 100 100)" stroke="url(#rg)"/>
                 </svg>
-                <div class="ring-text 
-                    {% if match_result.score >= 75 %}status-excellent
-                    {% elif match_result.score > 50 %}status-good
-                    {% else %}status-poor{% endif %}">
-                    {{ match_result.score }}<span style="font-size:1.5rem">%</span>
+                <div class="ring-inner">
+                    <div class="ring-num {% if match_result.score >= 75 %}col-green{% elif match_result.score > 50 %}col-yellow{% else %}col-red{% endif %}" id="ring-num">0</div>
+                    <div class="ring-pct">%</div>
                 </div>
             </div>
-
-            <div class="verdict-box">
-                <p style="font-size: 1rem; line-height: 1.7; text-align: center;">
-                    {% if match_result.score >= 75 %}
-                        <span class="verdict-label" style="color: #4ade80;">Elite Match!</span><br>You are a perfect candidate for this position based on technical alignment.
-                    {% elif match_result.score > 50 %}
-                        <span class="verdict-label" style="color: #facc15;">Strong Potential.</span><br>You have the core foundations but may need to sharpen a few niche areas.
-                    {% else %}
-                        <span class="verdict-label" style="color: #f87171;">Gap Identified.</span><br>This role significantly differs from your current resume. Consider bridging the skill gap.
-                    {% endif %}
-                </p>
+            <div class="verdict-card {% if match_result.score >= 75 %}v-green{% elif match_result.score > 50 %}v-yellow{% else %}v-red{% endif %}">
+                {% if match_result.score >= 75 %}
+                    <i class="fa-solid fa-trophy"></i> <strong>Elite Match</strong> — You're a top candidate for this role.
+                {% elif match_result.score > 50 %}
+                    <i class="fa-solid fa-thumbs-up"></i> <strong>Strong Potential</strong> — Sharpen a few niche skills to stand out.
+                {% else %}
+                    <i class="fa-solid fa-chart-line"></i> <strong>Gap Identified</strong> — Bridge these skill gaps to qualify.
+                {% endif %}
             </div>
         </div>
 
-        <!-- RIGHT: Breakdown Bars -->
-        <div class="glass-panel" style="padding: 2.5rem;">
-            <h3 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.6rem;">
-                <i class="fa-solid fa-sliders" style="color: var(--accent-secondary);"></i> Weighted Breakdown
-            </h3>
-            
+        <!-- Right: Breakdown bars -->
+        <div class="breakdown-card glass-panel reveal" style="animation-delay:.15s">
+            <h3><i class="fa-solid fa-sliders"></i> Weighted Breakdown</h3>
             {% for metric, value in match_result.breakdown.items %}
-            <div class="metric-row">
-                <div class="metric-label">
-                    <span style="text-transform: capitalize; font-weight: 600;">{{ metric|replace:'_ ' }}</span>
-                    <span style="color: var(--accent-primary); font-weight: 700;">{{ value }} pts</span>
+            <div class="bar-row">
+                <div class="bar-meta">
+                    <span class="bar-label">{{ metric|replace:'_ ' }}</span>
+                    <span class="bar-pts">{{ value }} pts</span>
                 </div>
-                <div class="progress-track">
-                    {% if metric == 'technical_skills' %}
-                        <div class="progress-fill" style="width: {% widthratio value 40 100 %}%; background: linear-gradient(90deg, #a855f7, #7c3aed);"></div>
-                    {% elif metric == 'soft_skills' or metric == 'keyword_match' or metric == 'experience_level' %}
-                        <div class="progress-fill" style="width: {% widthratio value 15 100 %}%; background: linear-gradient(90deg, #3b82f6, #2563eb);"></div>
-                    {% elif metric == 'education_level' %}
-                        <div class="progress-fill" style="width: {% widthratio value 10 100 %}%; background: linear-gradient(90deg, #14b8a6, #0d9488);"></div>
-                    {% else %}
-                        <div class="progress-fill" style="width: {% widthratio value 5 100 %}%; background: linear-gradient(90deg, #f43f5e, #e11d48);"></div>
-                    {% endif %}
+                <div class="bar-track">
+                    <div class="bar-fill" data-width="
+                        {% if metric == 'technical_skills' %}{% widthratio value 40 100 %}
+                        {% elif metric == 'soft_skills' or metric == 'keyword_match' or metric == 'experience_level' %}{% widthratio value 15 100 %}
+                        {% elif metric == 'education_level' %}{% widthratio value 10 100 %}
+                        {% else %}{% widthratio value 5 100 %}{% endif %}"
+                        style="width:0%; background:
+                        {% if metric == 'technical_skills' %}linear-gradient(90deg,#a855f7,#7c3aed)
+                        {% elif metric == 'soft_skills' or metric == 'keyword_match' or metric == 'experience_level' %}linear-gradient(90deg,#3b82f6,#2563eb)
+                        {% elif metric == 'education_level' %}linear-gradient(90deg,#14b8a6,#0d9488)
+                        {% else %}linear-gradient(90deg,#f43f5e,#e11d48){% endif %}">
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Skill Wall: Matched vs Missing -->
+    <!-- Skill Wall -->
     <div class="skill-wall">
-        <div class="tag-container glass-panel">
-            <h4 class="tag-heading" style="color: #4ade80;">
-                <i class="fa-solid fa-circle-check"></i> Requirement Alignment
-            </h4>
-            <div class="chip-group">
-                {% for skill in match_result.matched %}
-                    <span class="chip chip-matched">{{ skill }}</span>
+        <div class="skill-box reveal" style="border-color:rgba(74,222,128,.25)">
+            <div class="skill-box-head green-head">
+                <i class="fa-solid fa-circle-check"></i> Requirements Met
+                <span class="skill-count">{{ match_result.matched|length }}</span>
+            </div>
+            <div class="chips">
+                {% for s in match_result.matched %}
+                <span class="chip matched-chip">{{ s }}</span>
                 {% empty %}
-                    <p class="text-muted">No specific technical overlap detected.</p>
+                <p class="no-chip">No direct overlap detected.</p>
                 {% endfor %}
             </div>
         </div>
-
-        <div class="tag-container glass-panel">
-            <h4 class="tag-heading" style="color: #f87171;">
-                <i class="fa-solid fa-circle-xmark"></i> Missing Competencies
-            </h4>
-            <div class="chip-group">
-                {% for skill in match_result.missing %}
-                    <span class="chip chip-missing">{{ skill }}</span>
+        <div class="skill-box reveal" style="border-color:rgba(248,113,113,.25); animation-delay:.1s">
+            <div class="skill-box-head red-head">
+                <i class="fa-solid fa-circle-xmark"></i> Missing Skills
+                <span class="skill-count">{{ match_result.missing|length }}</span>
+            </div>
+            <div class="chips">
+                {% for s in match_result.missing %}
+                <span class="chip missing-chip">{{ s }}</span>
                 {% empty %}
-                    <p class="text-muted" style="color: #4ade80;">
-                        <i class="fa-solid fa-trophy"></i> You have 100% skill coverage for this JD!
-                    </p>
+                <p class="no-chip" style="color:#4ade80"><i class="fa-solid fa-trophy"></i> 100% coverage — nothing missing!</p>
                 {% endfor %}
             </div>
         </div>
     </div>
+
+    <!-- Action buttons -->
+    <div class="res-actions reveal">
+        <a href="{% url 'jd_matcher' %}" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Try Another JD</a>
+        <a href="{% url 'ats_checker' %}" class="btn btn-secondary"><i class="fa-solid fa-file-shield"></i> ATS Full Scan</a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary"><i class="fa-solid fa-house"></i> Dashboard</a>
+    </div>
 </div>
 
 <style>
-    /* Report Layout */
-    .report-grid {
-        display: grid; grid-template-columns: 380px 1fr; gap: 2.5rem; margin-bottom: 2.5rem;
-    }
+#res-canvas { position:fixed; inset:0; z-index:-1; pointer-events:none; }
+.res-root { max-width:1100px; margin:0 auto; padding:2rem 0 5rem; }
 
-    /* Score Card */
-    .score-summary-card { text-align: center; padding: 3rem 2.5rem !important; }
-    .card-eyebrow { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem; }
+/* Topbar */
+.res-topbar { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:3rem; flex-wrap:wrap; gap:1rem; }
+.res-title { font-size:2.8rem; font-weight:900; letter-spacing:-1.5px; }
+.grad-txt { background:linear-gradient(135deg,#a855f7,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.res-sub { color:var(--text-muted); margin-top:.3rem; font-size:1rem; }
 
-    /* Score Ring */
-    .score-ring-container {
-        position: relative; width: 200px; height: 200px; margin: 0 auto 2rem;
-    }
-    .svg-ring-bg { fill: none; stroke: rgba(0,0,0,0.05); stroke-width: 10; }
-    :root[data-theme="dark"] .svg-ring-bg { stroke: rgba(255,255,255,0.06); }
-    .svg-ring { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 2.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-    .ring-text {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        font-size: 3rem; font-weight: 900; letter-spacing: -2px;
-    }
+/* Grid */
+.score-grid { display:grid; grid-template-columns:380px 1fr; gap:2.5rem; margin-bottom:2.5rem; }
 
-    .status-excellent { stroke: #4ade80; color: #4ade80; }
-    .status-good      { stroke: #facc15; color: #facc15; }
-    .status-poor      { stroke: #f87171; color: #f87171; }
-    :root[data-theme="dark"] .status-excellent { text-shadow: 0 0 20px rgba(74,222,128,0.4); }
-    :root[data-theme="dark"] .status-good      { text-shadow: 0 0 20px rgba(250,204,21,0.4); }
-    :root[data-theme="dark"] .status-poor      { text-shadow: 0 0 20px rgba(248,113,113,0.4); }
+/* Score Card */
+.score-card { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:24px; padding:3rem 2rem; text-align:center; display:flex; flex-direction:column; align-items:center; }
+.sc-label { font-size:.8rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-muted); font-weight:700; margin-bottom:1.5rem; }
+.ring-wrap { position:relative; width:200px; height:200px; margin-bottom:2rem; }
+.ring-svg { width:100%; height:100%; }
+.ring-bg { fill:none; stroke:rgba(255,255,255,.06); stroke-width:12; }
+:root[data-theme="light"] .ring-bg { stroke:#e2e8f0; }
+.ring-fg { fill:none; stroke-width:12; stroke-linecap:round; transition:stroke-dasharray 2.5s cubic-bezier(.17,.67,.83,.67); }
+.ring-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.ring-num { font-size:4rem; font-weight:900; letter-spacing:-3px; line-height:1; }
+.ring-pct { font-size:1.2rem; font-weight:700; margin-top:.2rem; color:var(--text-muted); }
+.col-green  { color:#4ade80; text-shadow:0 0 30px rgba(74,222,128,.4); }
+.col-yellow { color:#facc15; text-shadow:0 0 30px rgba(250,204,21,.4); }
+.col-red    { color:#f87171; text-shadow:0 0 30px rgba(248,113,113,.4); }
 
-    .verdict-box { background: var(--panel-bg); padding: 1.5rem; border-radius: 16px; margin-top: 0.5rem; }
-    .verdict-label { font-weight: 800; font-size: 1.1rem; }
+.verdict-card { padding:1.2rem 1.5rem; border-radius:16px; font-size:.95rem; line-height:1.6; width:100%; }
+.v-green  { background:rgba(74,222,128,.1); border:1px solid rgba(74,222,128,.2); color:#4ade80; }
+.v-yellow { background:rgba(250,204,21,.1);  border:1px solid rgba(250,204,21,.2);  color:#facc15; }
+.v-red    { background:rgba(248,113,113,.1); border:1px solid rgba(248,113,113,.2); color:#f87171; }
 
-    /* Progress Bars */
-    .metric-row { margin-bottom: 1.8rem; }
-    .metric-label { display: flex; justify-content: space-between; margin-bottom: 0.6rem; font-size: 0.9rem; }
-    .progress-track { background: var(--panel-bg); height: 10px; border-radius: 50px; overflow: hidden; border: 1px solid var(--glass-border); }
-    .progress-fill { height: 100%; border-radius: 50px; transition: width 1.8s cubic-bezier(0.4, 0, 0.2, 1); width: 0; }
+/* Breakdown */
+.breakdown-card { padding:2.5rem !important; }
+.breakdown-card h3 { font-size:1.2rem; font-weight:700; margin-bottom:2rem; display:flex; align-items:center; gap:.6rem; }
+.breakdown-card h3 i { color:var(--accent-secondary); }
+.bar-row { margin-bottom:1.8rem; }
+.bar-meta { display:flex; justify-content:space-between; margin-bottom:.6rem; font-size:.9rem; }
+.bar-label { font-weight:600; text-transform:capitalize; }
+.bar-pts { color:var(--accent-primary); font-weight:700; }
+.bar-track { height:10px; background:var(--panel-bg); border-radius:50px; overflow:hidden; border:1px solid var(--glass-border); }
+.bar-fill { height:100%; border-radius:50px; transition:width 1.8s cubic-bezier(.4,0,.2,1); }
 
-    /* Skill Wall */
-    .skill-wall { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 0.5rem; }
-    .tag-heading { font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; }
-    .chip-group { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-    .chip {
-        display: inline-block; padding: 0.4rem 1rem; border-radius: 50px;
-        font-size: 0.85rem; font-weight: 600; margin: 0;
-    }
-    .chip-matched { background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.25); }
-    .chip-missing  { background: rgba(248, 113, 113, 0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+/* Skill Wall */
+.skill-wall { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2.5rem; }
+.skill-box { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:22px; padding:2rem; }
+.skill-box-head { display:flex; align-items:center; gap:.6rem; font-size:1rem; font-weight:800; margin-bottom:1.5rem; }
+.skill-count { margin-left:auto; background:var(--panel-bg); border:1px solid var(--glass-border); border-radius:50px; padding:.2rem .8rem; font-size:.8rem; font-weight:700; color:var(--text-muted); }
+.green-head { color:#4ade80; }
+.red-head   { color:#f87171; }
+.chips { display:flex; flex-wrap:wrap; gap:.6rem; }
+.chip { display:inline-block; padding:.4rem 1rem; border-radius:50px; font-size:.85rem; font-weight:600; transition:transform .2s; }
+.chip:hover { transform:scale(1.08); }
+.matched-chip { background:rgba(74,222,128,.12); color:#4ade80; border:1px solid rgba(74,222,128,.25); }
+.missing-chip { background:rgba(248,113,113,.12); color:#f87171; border:1px solid rgba(248,113,113,.25); }
+.no-chip { font-size:.9rem; color:var(--text-muted); }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-        .report-grid { grid-template-columns: 1fr; }
-        .skill-wall  { grid-template-columns: 1fr; }
-    }
+/* Actions */
+.res-actions { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
+
+/* Reveal */
+.reveal { opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+@media (max-width:900px) {
+    .score-grid { grid-template-columns:1fr; }
+    .skill-wall { grid-template-columns:1fr; }
+}
+@media (max-width:600px) { .res-title { font-size:2rem; } }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const ring = document.querySelector('.score-ring-container');
-        if (ring) {
-            const score = parseInt(ring.getAttribute('data-score'));
-            const circle = ring.querySelector('.svg-ring');
-            const radius = circle.r.baseVal.value;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (score / 100) * circumference;
-            setTimeout(() => {
-                circle.style.strokeDasharray = `${circumference - offset} ${circumference}`;
-            }, 400);
-        }
+/* Canvas */
+(function(){
+  const c=document.getElementById('res-canvas'),ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+  const score={{ match_result.score }};
+  const color=score>=75?'16,185,129':score>50?'234,179,8':'239,68,68';
+  for(let i=0;i<50;i++) pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3});
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,1.2,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${color},.4)`;ctx.fill();
     });
+    pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
+      const d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<120){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle=`rgba(${color},${.1*(1-d/120)})`;ctx.lineWidth=.7;ctx.stroke();}
+    }));
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* Score ring */
+document.addEventListener('DOMContentLoaded',()=>{
+  const wrap=document.getElementById('ring-wrap');
+  const score=parseInt(wrap.dataset.score)||0;
+  const fg=document.getElementById('ring-fg');
+  const numEl=document.getElementById('ring-num');
+  const circ=2*Math.PI*85;
+  let cur=0;
+  const iv=setInterval(()=>{
+    if(cur>=score){clearInterval(iv);return;}
+    cur++;
+    numEl.textContent=cur;
+    fg.setAttribute('stroke-dasharray',`${(cur/100)*circ} ${circ}`);
+  },22);
+
+  /* Bars */
+  setTimeout(()=>{
+    document.querySelectorAll('.bar-fill').forEach(b=>{
+      b.style.width=b.dataset.width+'%';
+    });
+  },400);
+
+  /* Reveal on scroll */
+  const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+});
 </script>
 {% endblock %}

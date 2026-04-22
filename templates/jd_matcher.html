@@ -1,127 +1,249 @@
 {% extends 'base.html' %}
-
 {% block title %}JD Matcher - Smart Resume Screening{% endblock %}
 
 {% block content %}
-<div class="animate-in">
-    <div class="page-header" style="margin-bottom: 3rem;">
-        <h2 class="gradient-title">Job Compatibility Matcher</h2>
-        <p class="text-muted" style="margin-top: 0.5rem; max-width: 650px;">Compare your resume against specific job requirements to get a detailed compatibility breakdown across tech skills, experience, and domain knowledge.</p>
+<canvas id="jd-canvas"></canvas>
+
+<div class="jd-root animate-in">
+
+    <!-- Header -->
+    <div class="jd-header">
+        <div class="jd-badge"><i class="fa-solid fa-scale-balanced"></i> Precision Matching Engine</div>
+        <h1 class="jd-title">Job Compatibility <span class="grad-txt">Matcher</span></h1>
+        <p class="jd-sub">Upload your resume and paste any job description — our AI computes a weighted compatibility score across 5 dimensions in seconds.</p>
     </div>
 
-    <form method="post" enctype="multipart/form-data" id="matcher-form">
+    <!-- How it works strip -->
+    <div class="how-strip">
+        <div class="how-step"><div class="how-num">01</div><div class="how-text"><strong>Upload Resume</strong><br><span>PDF or DOCX</span></div></div>
+        <div class="how-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="how-step"><div class="how-num">02</div><div class="how-text"><strong>Paste JD</strong><br><span>Any job portal</span></div></div>
+        <div class="how-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="how-step"><div class="how-num">03</div><div class="how-text"><strong>Get Score</strong><br><span>5-factor analysis</span></div></div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="jd-form">
         {% csrf_token %}
-        <div class="matcher-grid">
-            <!-- Step 1: Resume Upload -->
-            <div class="input-group-panel step-1">
-                <div class="step-header">
-                    <div class="step-num" style="color: var(--accent-primary);">01</div>
-                    <h4><i class="fa-solid fa-file-invoice" style="color: var(--accent-primary);"></i> Your Resume</h4>
-                    <p class="text-muted">Upload the PDF/DOCX version of the resume you want to test.</p>
-                </div>
-                <div class="step-content">
-                    <div class="upload-zone-mini" id="upload-zone">
-                        <i class="fa-solid fa-cloud-arrow-up upload-icon" style="color: var(--accent-primary);"></i>
-                        <p id="file-name" class="upload-label">Click to upload resume</p>
-                        <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.5rem;">PDF or DOCX format</p>
-                        {{ form.resume }}
+        <div class="jd-grid">
+
+            <!-- Panel 1: Resume -->
+            <div class="jd-panel panel-purple">
+                <div class="panel-accent purple-accent"></div>
+                <div class="panel-icon purple-icon"><i class="fa-solid fa-file-invoice"></i></div>
+                <h3>Your Resume</h3>
+                <p class="panel-desc">Upload the PDF or DOCX version of your resume to analyze.</p>
+                <div class="drop-zone" id="drop-zone">
+                    <div class="dz-inner" id="dz-inner">
+                        <i class="fa-solid fa-cloud-arrow-up dz-icon"></i>
+                        <div class="dz-title" id="dz-title">Drop resume here</div>
+                        <div class="dz-sub">or click to browse · PDF, DOCX</div>
                     </div>
+                    {{ form.resume }}
+                </div>
+                <div class="file-chip hidden" id="file-chip">
+                    <i class="fa-solid fa-file-check"></i>
+                    <span id="file-chip-name"></span>
+                    <button type="button" class="chip-remove" id="chip-remove"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
 
-            <!-- Step 2: Job Description -->
-            <div class="input-group-panel step-2">
-                <div class="step-header">
-                    <div class="step-num" style="color: var(--accent-secondary);">02</div>
-                    <h4><i class="fa-solid fa-align-left" style="color: var(--accent-secondary);"></i> Job Description</h4>
-                    <p class="text-muted">Paste the full text of the job description from LinkedIn, Naukri, or any portal.</p>
-                </div>
-                <div class="step-content">
-                    {{ form.job_description }}
-                </div>
+            <!-- Panel 2: JD -->
+            <div class="jd-panel panel-blue">
+                <div class="panel-accent blue-accent"></div>
+                <div class="panel-icon blue-icon"><i class="fa-solid fa-align-left"></i></div>
+                <h3>Job Description</h3>
+                <p class="panel-desc">Paste the full job description text from LinkedIn, Naukri, or any portal.</p>
+                {{ form.job_description }}
+                <div class="jd-counter"><span id="jd-chars">0</span> characters</div>
             </div>
+
         </div>
 
-        <div class="analyze-btn-container">
-            <button type="submit" class="btn btn-primary analyze-btn" id="submit-btn">
-                <i class="fa-solid fa-microchip"></i> Calculate Compatibility
+        <!-- Submit -->
+        <div class="submit-area">
+            <div class="readiness-bar-wrap" id="readiness-wrap">
+                <div class="readiness-label">Readiness: <span id="readiness-text">Waiting for inputs…</span></div>
+                <div class="readiness-track"><div class="readiness-fill" id="readiness-fill" style="width:0%"></div></div>
+            </div>
+            <button type="submit" class="jd-submit-btn" id="submit-btn" disabled>
+                <span id="btn-text"><i class="fa-solid fa-microchip"></i> Calculate Compatibility</span>
+                <span id="btn-loader" class="hidden"><i class="fa-solid fa-spinner fa-spin"></i> Analyzing…</span>
             </button>
         </div>
     </form>
+
+    <!-- Feature pills -->
+    <div class="feature-pills">
+        <div class="f-pill"><i class="fa-solid fa-brain"></i> NLP Parsing</div>
+        <div class="f-pill"><i class="fa-solid fa-chart-bar"></i> 5-Factor Score</div>
+        <div class="f-pill"><i class="fa-solid fa-magnifying-glass"></i> Skill Gap Analysis</div>
+        <div class="f-pill"><i class="fa-solid fa-graduation-cap"></i> Education Match</div>
+        <div class="f-pill"><i class="fa-solid fa-bolt"></i> Instant Results</div>
+    </div>
 </div>
 
 <style>
-    .gradient-title {
-        font-size: 2.5rem; font-weight: 800;
-        background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .matcher-grid {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; align-items: stretch;
-    }
-    .input-group-panel {
-        background: var(--card-bg); border-radius: 24px; padding: 2.5rem;
-        transition: all 0.3s ease; box-shadow: var(--glass-shadow);
-        position: relative; overflow: hidden; display: flex; flex-direction: column;
-    }
-    .input-group-panel.step-1 { border: 2px solid rgba(126, 34, 206, 0.3); }
-    .input-group-panel.step-2 { border: 2px solid rgba(59, 130, 246, 0.3); }
-    .input-group-panel:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+#jd-canvas { position:fixed; inset:0; z-index:-1; pointer-events:none; }
 
-    .step-num { font-size: 3rem; font-weight: 900; opacity: 0.15; line-height: 1; margin-bottom: 0.5rem; }
-    .step-header { margin-bottom: 1.5rem; }
-    .step-header h4 { font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; }
-    .step-content { flex: 1; display: flex; flex-direction: column; }
+.jd-root { max-width:1100px; margin:0 auto; padding:2rem 0 5rem; }
 
-    .upload-zone-mini {
-        border: 2px dashed var(--glass-border); border-radius: 16px; padding: 3rem 1rem;
-        text-align: center; cursor: pointer; position: relative; overflow: hidden;
-        flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-        transition: all 0.3s ease;
-    }
-    .upload-zone-mini:hover { border-color: var(--accent-primary); background: rgba(126, 34, 206, 0.05); }
-    .upload-icon { font-size: 2.5rem; margin-bottom: 1rem; transition: transform 0.3s; }
-    .upload-zone-mini:hover .upload-icon { transform: translateY(-6px); }
-    .upload-label { font-weight: 600; }
+/* Header */
+.jd-header { text-align:center; padding:3rem 0 2.5rem; }
+.jd-badge { display:inline-flex; align-items:center; gap:.6rem; background:rgba(168,85,247,.1); border:1px solid rgba(168,85,247,.25); color:#a855f7; padding:.5rem 1.4rem; border-radius:50px; font-size:.8rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin-bottom:1.5rem; }
+.jd-title { font-size:3.5rem; font-weight:900; letter-spacing:-2px; margin-bottom:1rem; }
+.grad-txt { background:linear-gradient(135deg,#a855f7,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.jd-sub { color:var(--text-muted); font-size:1.1rem; max-width:600px; margin:0 auto 2rem; line-height:1.7; }
 
-    input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-    
-    textarea.form-control {
-        min-height: 300px; resize: vertical; font-family: inherit; font-size: 0.95rem;
-        line-height: 1.7; border-radius: 16px; padding: 1rem 1.2rem; flex: 1;
-    }
+/* How Strip */
+.how-strip { display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-bottom:3rem; flex-wrap:wrap; }
+.how-step { display:flex; align-items:center; gap:1rem; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:16px; padding:1rem 1.5rem; }
+.how-num { font-size:1.8rem; font-weight:900; background:linear-gradient(135deg,#a855f7,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.how-text strong { display:block; font-size:.95rem; }
+.how-text span { font-size:.8rem; color:var(--text-muted); }
+.how-arrow { color:var(--text-muted); font-size:1.2rem; }
 
-    .analyze-btn-container { margin-top: 3rem; display: flex; justify-content: center; }
-    .analyze-btn {
-        padding: 1.2rem 5rem; font-size: 1.2rem; border-radius: 50px;
-        box-shadow: 0 10px 25px rgba(126, 34, 206, 0.35);
-    }
-    .analyze-btn:hover { transform: scale(1.05) translateY(-3px) !important; }
+/* Panels */
+.jd-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2.5rem; }
+.jd-panel { background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:24px; padding:2.5rem; position:relative; overflow:hidden; display:flex; flex-direction:column; transition:transform .3s, box-shadow .3s; }
+.jd-panel:hover { transform:translateY(-6px); box-shadow:0 24px 60px rgba(0,0,0,.2); }
+.panel-accent { position:absolute; top:0; left:0; right:0; height:4px; border-radius:24px 24px 0 0; }
+.purple-accent { background:linear-gradient(90deg,#a855f7,#7c3aed); }
+.blue-accent   { background:linear-gradient(90deg,#3b82f6,#2563eb); }
 
-    @media (max-width: 768px) {
-        .matcher-grid { grid-template-columns: 1fr; }
-        .analyze-btn { padding: 1rem 2.5rem; width: auto; }
-    }
+.panel-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin-bottom:1.2rem; }
+.purple-icon { background:rgba(168,85,247,.15); color:#a855f7; }
+.blue-icon   { background:rgba(59,130,246,.15);  color:#3b82f6; }
+.jd-panel h3 { font-size:1.4rem; font-weight:800; margin-bottom:.6rem; }
+.panel-desc { color:var(--text-muted); font-size:.9rem; margin-bottom:1.5rem; line-height:1.6; }
+
+/* Drop Zone */
+.drop-zone { border:2px dashed var(--glass-border); border-radius:18px; position:relative; overflow:hidden; transition:all .3s; flex:1; min-height:180px; display:flex; align-items:center; justify-content:center; }
+.drop-zone.dragover { border-color:#a855f7; background:rgba(168,85,247,.06); transform:scale(1.01); }
+.drop-zone.filled { border-color:#10b981; border-style:solid; background:rgba(16,185,129,.05); }
+.dz-inner { text-align:center; padding:2rem; pointer-events:none; }
+.dz-icon { font-size:2.5rem; margin-bottom:1rem; background:linear-gradient(135deg,#a855f7,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; transition:transform .3s; }
+.drop-zone:hover .dz-icon { transform:translateY(-8px); }
+.dz-title { font-weight:700; font-size:1rem; margin-bottom:.3rem; }
+.dz-sub { font-size:.8rem; color:var(--text-muted); }
+input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+
+.file-chip { display:flex; align-items:center; gap:.8rem; background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.3); border-radius:12px; padding:.8rem 1.2rem; margin-top:1rem; color:#10b981; font-weight:600; font-size:.9rem; }
+.chip-remove { background:none; border:none; color:#10b981; cursor:pointer; padding:0; font-size:1rem; }
+.hidden { display:none !important; }
+
+/* Textarea */
+textarea { width:100%; min-height:280px; resize:vertical; background:var(--panel-bg); border:1.5px solid var(--glass-border); border-radius:16px; color:var(--text-main); padding:1.2rem; font-family:inherit; font-size:.95rem; line-height:1.7; transition:border-color .3s, box-shadow .3s; flex:1; }
+textarea:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 4px rgba(59,130,246,.1); }
+:root[data-theme="dark"] textarea { background:rgba(15,23,42,.4); }
+.jd-counter { text-align:right; font-size:.8rem; color:var(--text-muted); margin-top:.5rem; }
+
+/* Submit */
+.submit-area { display:flex; flex-direction:column; align-items:center; gap:1.5rem; margin-bottom:3rem; }
+.readiness-bar-wrap { width:100%; max-width:600px; }
+.readiness-label { font-size:.85rem; color:var(--text-muted); margin-bottom:.6rem; text-align:center; }
+.readiness-track { height:6px; background:var(--panel-bg); border-radius:50px; overflow:hidden; border:1px solid var(--glass-border); }
+.readiness-fill { height:100%; background:linear-gradient(90deg,#a855f7,#3b82f6); border-radius:50px; transition:width .5s ease; }
+.jd-submit-btn { background:linear-gradient(135deg,#7e22ce,#3b82f6); color:#fff; border:none; padding:1.2rem 4.5rem; border-radius:50px; font-size:1.15rem; font-weight:800; cursor:pointer; box-shadow:0 8px 30px rgba(126,34,206,.4); transition:all .3s; }
+.jd-submit-btn:hover:not(:disabled) { transform:translateY(-3px) scale(1.03); box-shadow:0 14px 40px rgba(126,34,206,.55); }
+.jd-submit-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Feature pills */
+.feature-pills { display:flex; flex-wrap:wrap; gap:1rem; justify-content:center; }
+.f-pill { display:flex; align-items:center; gap:.6rem; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:50px; padding:.6rem 1.4rem; font-size:.85rem; font-weight:600; color:var(--text-muted); transition:all .25s; }
+.f-pill:hover { color:var(--text-main); border-color:var(--accent-primary); transform:translateY(-2px); }
+.f-pill i { color:var(--accent-primary); }
+
+@media (max-width:768px) {
+    .jd-grid { grid-template-columns:1fr; }
+    .jd-title { font-size:2.4rem; }
+    .how-strip { flex-direction:column; }
+    .how-arrow { transform:rotate(90deg); }
+}
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    const fileInput = document.querySelector('input[type="file"]');
-    const fileName = document.getElementById('file-name');
-
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length > 0) {
-            fileName.innerText = fileInput.files[0].name;
-            fileName.style.color = 'var(--accent-primary)';
-        }
+/* Canvas background */
+(function(){
+  const c=document.getElementById('jd-canvas'), ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=c.width=innerWidth;H=c.height=innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+  const dark=()=>document.documentElement.getAttribute('data-theme')!=='light';
+  for(let i=0;i<60;i++) pts.push({x:Math.random()*1e4,y:Math.random()*1e4,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3});
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W)p.vx*=-1;
+      if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,1.2,0,Math.PI*2);
+      ctx.fillStyle=dark()?'rgba(59,130,246,.5)':'rgba(59,130,246,.2)';ctx.fill();
     });
+    pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
+      const d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<130){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+      ctx.strokeStyle=dark()?`rgba(59,130,246,${.12*(1-d/130)})`:`rgba(59,130,246,${.05*(1-d/130)})`;ctx.lineWidth=.7;ctx.stroke();}
+    }));
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 
-    // Loading state on submit
-    document.getElementById('matcher-form').addEventListener('submit', () => {
-        const btn = document.getElementById('submit-btn');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...';
-        btn.disabled = true;
-    });
+/* File input */
+const fileInput = document.querySelector('input[type="file"]');
+const dropZone  = document.getElementById('drop-zone');
+const dzTitle   = document.getElementById('dz-title');
+const fileChip  = document.getElementById('file-chip');
+const chipName  = document.getElementById('file-chip-name');
+const chipRem   = document.getElementById('chip-remove');
+
+function setFile(f){
+  dzTitle.textContent = f.name;
+  dropZone.classList.add('filled');
+  chipName.textContent = f.name;
+  fileChip.classList.remove('hidden');
+  updateReadiness();
+}
+fileInput.addEventListener('change',e=>{ if(e.target.files[0]) setFile(e.target.files[0]); });
+chipRem.addEventListener('click',()=>{
+  fileInput.value=''; dzTitle.textContent='Drop resume here';
+  dropZone.classList.remove('filled'); fileChip.classList.add('hidden'); updateReadiness();
+});
+['dragenter','dragover'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.add('dragover');}));
+['dragleave','drop'].forEach(ev=>dropZone.addEventListener(ev,e=>{e.preventDefault();dropZone.classList.remove('dragover');}));
+dropZone.addEventListener('drop',e=>{ const f=e.dataTransfer.files[0]; if(f){ const dt=new DataTransfer();dt.items.add(f);fileInput.files=dt.files;setFile(f); } });
+
+/* JD char counter */
+const jdTextarea = document.querySelector('textarea');
+const jdChars    = document.getElementById('jd-chars');
+jdTextarea.addEventListener('input',()=>{ jdChars.textContent=jdTextarea.value.length; updateReadiness(); });
+
+/* Readiness bar */
+const rfill = document.getElementById('readiness-fill');
+const rtext = document.getElementById('readiness-text');
+const submitBtn = document.getElementById('submit-btn');
+function updateReadiness(){
+  const hasFile = fileInput.files && fileInput.files.length > 0;
+  const jdLen   = jdTextarea.value.trim().length;
+  let pct = 0;
+  if(hasFile) pct += 50;
+  if(jdLen > 0) pct += Math.min(50, Math.round((jdLen/200)*50));
+  rfill.style.width = pct+'%';
+  if(pct === 0)       { rtext.textContent = 'Waiting for inputs…'; rtext.style.color='var(--text-muted)'; }
+  else if(pct < 50)   { rtext.textContent = 'Add a resume file…'; rtext.style.color='#facc15'; }
+  else if(pct < 80)   { rtext.textContent = 'Paste more of the JD…'; rtext.style.color='#facc15'; }
+  else if(pct < 100)  { rtext.textContent = 'Almost ready!'; rtext.style.color='#a855f7'; }
+  else                { rtext.textContent = 'Ready to analyze ✓'; rtext.style.color='#4ade80'; }
+  submitBtn.disabled = (pct < 60);
+}
+
+/* Loading state */
+document.getElementById('jd-form').addEventListener('submit',()=>{
+  document.getElementById('btn-text').classList.add('hidden');
+  document.getElementById('btn-loader').classList.remove('hidden');
+  submitBtn.disabled = true;
+});
 </script>
 {% endblock %}
