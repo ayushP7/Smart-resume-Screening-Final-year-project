@@ -6,34 +6,75 @@
 <style>
     .matcher-grid {
         display: grid;
-        grid-template-columns: 1fr 1.5fr;
+        grid-template-columns: 1fr 1fr;
         gap: 2rem;
         margin-top: 2rem;
+        align-items: stretch;
     }
     .input-group-panel {
-        background: var(--glass-bg);
+        background: var(--card-bg);
         border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        padding: 2rem;
+        border-radius: 24px;
+        padding: 2.5rem;
         transition: all 0.3s ease;
+        box-shadow: var(--glass-shadow);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
+    .input-group-panel.step-1 { border: 2px solid rgba(126, 34, 206, 0.3); }
+    .input-group-panel.step-2 { border: 2px solid rgba(59, 130, 246, 0.3); }
+
+    :root[data-theme="light"] .input-group-panel.step-1 { border-color: var(--accent-primary); }
+    :root[data-theme="light"] .input-group-panel.step-2 { border-color: var(--accent-secondary); }
+
     .input-group-panel:hover {
-        border-color: rgba(168, 85, 247, 0.4);
-        transform: translateY(-5px);
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .step-header {
+        margin-bottom: 2rem;
+        min-height: 85px; /* Ensures headers stay level even with wrapping */
+    }
+    .step-header h4 {
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .step-header p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        opacity: 0.8;
+    }
+    .step-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
     }
     .upload-zone-mini {
-        border: 2px dashed var(--glass-border);
+        border: 3px dashed var(--glass-border);
         border-radius: 12px;
         padding: 2.5rem 1rem;
         text-align: center;
         cursor: pointer;
         position: relative;
         overflow: hidden;
-        margin-top: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    :root[data-theme="light"] .upload-zone-mini {
+        border-color: var(--accent-primary);
     }
     .upload-zone-mini:hover {
         border-color: var(--accent-primary);
-        background: rgba(168, 85, 247, 0.05);
+        background: rgba(126, 34, 206, 0.05);
     }
     .file-input-mini {
         position: absolute;
@@ -43,15 +84,18 @@
     textarea.form-control {
         min-height: 250px;
         resize: vertical;
-        background: rgba(0, 0, 0, 0.05);
+        background: var(--panel-bg);
         color: var(--text-main);
         border: 1px solid var(--glass-border);
         font-family: inherit;
         font-size: 0.95rem;
         line-height: 1.6;
+        border-radius: 12px;
+        padding: 1rem;
     }
-    :root[data-theme="dark"] textarea.form-control {
-        background: rgba(0, 0, 0, 0.3);
+    :root[data-theme="light"] textarea.form-control {
+        background: #f8fafc;
+        border: 2px solid var(--accent-secondary);
     }
     .analyze-btn-container {
         margin-top: 3rem;
@@ -86,20 +130,28 @@
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="matcher-grid">
-        <div class="input-group-panel">
-            <h4 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-file-invoice" style="color: var(--accent-primary);"></i> Step 1: Your Resume</h4>
-            <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.5rem;">Upload the PDF/DOCX version of the resume you want to test.</p>
-            <div class="upload-zone-mini">
-                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2rem; margin-bottom: 1rem; color: var(--accent-primary);"></i>
-                <p id="file-name" style="font-weight: 500;">Click to upload resume</p>
-                {{ form.resume }}
+        <div class="input-group-panel step-1">
+            <div class="step-header">
+                <h4><i class="fa-solid fa-file-invoice" style="color: var(--accent-primary);"></i> Step 1: Your Resume</h4>
+                <p class="text-muted">Upload the PDF/DOCX version of the resume you want to test.</p>
+            </div>
+            <div class="step-content">
+                <div class="upload-zone-mini">
+                    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--accent-primary);"></i>
+                    <p id="file-name" style="font-weight: 500;">Click to upload resume</p>
+                    {{ form.resume }}
+                </div>
             </div>
         </div>
 
-        <div class="input-group-panel">
-            <h4 style="margin-bottom: 0.5rem;"><i class="fa-solid fa-align-left" style="color: var(--accent-secondary);"></i> Step 2: Job Description</h4>
-            <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.5rem;">Paste the full text of the job description from LinkedIn, Naukri, or any portal.</p>
-            {{ form.job_description }}
+        <div class="input-group-panel step-2">
+            <div class="step-header">
+                <h4><i class="fa-solid fa-align-left" style="color: var(--accent-secondary);"></i> Step 2: Job Description</h4>
+                <p class="text-muted">Paste the full text of the job description from LinkedIn, Naukri, or any portal.</p>
+            </div>
+            <div class="step-content">
+                {{ form.job_description }}
+            </div>
         </div>
     </div>
 

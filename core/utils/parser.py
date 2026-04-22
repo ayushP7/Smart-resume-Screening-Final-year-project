@@ -3,14 +3,24 @@ import docx
 import re
 import os
 
-# Predefined list of technical skills (expanded to match jd_matcher)
+# Expanded list of technical skills for better extraction
 TECHNICAL_SKILLS = [
-    'python', 'java', 'c++', 'javascript', 'typescript', 'html', 'css', 'react', 'angular', 'vue',
-    'node.js', 'express', 'django', 'flask', 'spring', 'sql', 'mysql', 'postgresql',
-    'mongodb', 'aws', 'docker', 'kubernetes', 'git', 'linux', 'machine learning',
-    'deep learning', 'nlp', 'data analysis', 'pandas', 'numpy', 'scipy', 'pytorch',
-    'tensorflow', 'agile', 'scrum', 'rest api', 'graphql', 'c#', '.net', 'php', 'ruby'
+    # Programming Languages
+    'python', 'java', 'c++', 'javascript', 'typescript', 'c#', '.net', 'php', 'ruby', 'go', 'rust', 'swift', 'kotlin', 'scala',
+    # Web Frameworks
+    'react', 'angular', 'vue', 'next.js', 'nuxt.js', 'svelte', 'node.js', 'express', 'django', 'flask', 'spring', 'asp.net', 'laravel', 'ruby on rails',
+    # Mobile
+    'flutter', 'react native', 'android', 'ios', 'xamarin', 'ionic',
+    # Databases
+    'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'cassandra', 'dynamodb', 'sqlite', 'oracle',
+    # Cloud & DevOps
+    'aws', 'azure', 'gcp', 'google cloud', 'docker', 'kubernetes', 'jenkins', 'terraform', 'ansible', 'git', 'github', 'gitlab', 'bitbucket', 'linux', 'ubuntu', 'centos',
+    # Data Science & ML
+    'machine learning', 'deep learning', 'nlp', 'natural language processing', 'data analysis', 'pandas', 'numpy', 'scipy', 'pytorch', 'tensorflow', 'keras', 'opencv', 'scikit-learn',
+    # Other Tools & Concepts
+    'rest api', 'graphql', 'grpc', 'agile', 'scrum', 'kanban', 'unit testing', 'selenium', 'cypress', 'redux', 'webpack', 'babel', 'pwa'
 ]
+
 
 def extract_text_from_pdf(file_obj):
     text = ""

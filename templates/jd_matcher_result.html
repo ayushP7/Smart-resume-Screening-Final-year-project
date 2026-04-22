@@ -53,7 +53,8 @@
     /* Breakdown Bars */
     .metric-row { margin-bottom: 1.5rem; }
     .metric-label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
-    .progress-track { background: rgba(255,255,255,0.05); height: 8px; border-radius: 10px; overflow: hidden; }
+    .progress-track { background: rgba(0,0,0,0.06); height: 10px; border-radius: 10px; overflow: hidden; }
+    :root[data-theme="dark"] .progress-track { background: rgba(255,255,255,0.05); }
     .progress-fill { height: 100%; border-radius: 10px; transition: width 1.5s ease-out; }
 
     /* Skill Tags */
@@ -136,7 +137,7 @@
         {% for metric, value in match_result.breakdown.items %}
             <div class="metric-row">
                 <div class="metric-label">
-                    <span style="text-transform: capitalize; font-weight: 500;">{{ metric|replace:'_, ' }}</span>
+                    <span style="text-transform: capitalize; font-weight: 500;">{{ metric|replace:'_ ' }}</span>
                     <span style="color: var(--text-main)">{{ value }} pts</span>
                 </div>
                 <div class="progress-track">

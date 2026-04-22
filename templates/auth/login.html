@@ -9,19 +9,19 @@
             <div class="auth-icon-circle">
                 <i class="fa-solid fa-lock"></i>
             </div>
-            <h2>Welcome Back</h2>
+            <h2>Welcome</h2>
             <p class="text-muted">Enter your credentials to access your dashboard</p>
         </div>
-        
+
         <form method="post" class="auth-form">
             {% csrf_token %}
-            
+
             {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
             {% endif %}
 
             {% if form.errors %}
@@ -29,22 +29,24 @@
                 <i class="fa-solid fa-triangle-exclamation"></i> Invalid username or password.
             </div>
             {% endif %}
-            
+
             <div class="form-group">
                 <label for="id_username"><i class="fa-solid fa-user"></i> Username</label>
-                <input type="text" name="username" id="id_username" class="form-control" placeholder="Enter username" required>
+                <input type="text" name="username" id="id_username" class="form-control" placeholder="Enter username"
+                    required>
             </div>
 
             <div class="form-group">
                 <label for="id_password"><i class="fa-solid fa-key"></i> Password</label>
-                <input type="password" name="password" id="id_password" class="form-control" placeholder="••••••••" required>
+                <input type="password" name="password" id="id_password" class="form-control" placeholder="••••••••"
+                    required>
             </div>
-            
+
             <button type="submit" class="btn btn-primary btn-block">
                 Sign In <i class="fa-solid fa-arrow-right-to-bracket" style="margin-left: 0.5rem;"></i>
             </button>
         </form>
-        
+
         <div class="auth-footer">
             <p>Don't have an account? <a href="{% url 'register' %}">Create Account</a></p>
         </div>
@@ -56,75 +58,132 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        min-height: calc(100vh - 4rem);
-        padding: 2rem;
+        min-height: calc(100vh - 6rem);
+        padding: 1.5rem;
     }
+
     .auth-card {
         width: 100%;
-        max-width: 450px;
-        padding: 3rem !important;
-        animation: fadeInScale 0.5s ease-out;
+        max-width: 420px;
+        padding: 2.2rem !important;
+        animation: fadeInScale 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border-bottom: 4px solid var(--accent-primary);
+        border-radius: 20px;
     }
+
+    :root[data-theme="light"] .auth-card {
+        background: #ffffff;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
     .auth-header {
         text-align: center;
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
     }
+
     .auth-icon-circle {
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
         background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        border-radius: 50%;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 1.5rem;
-        font-size: 1.5rem;
+        margin: 0 auto 1rem;
+        font-size: 1.2rem;
         color: white;
-        box-shadow: 0 10px 20px rgba(126, 34, 206, 0.3);
+        box-shadow: 0 8px 16px rgba(126, 34, 206, 0.25);
     }
+
     .auth-header h2 {
-        font-size: 1.8rem;
+        font-size: 1.6rem;
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.3rem;
+        letter-spacing: -0.5px;
     }
+
+    .auth-form .form-group {
+        margin-bottom: 1.2rem;
+    }
+
     .auth-form .form-group label {
         display: flex;
         align-items: center;
         gap: 0.6rem;
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-bottom: 0.6rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
     }
+
     .auth-form .form-control {
-        background: rgba(15, 23, 42, 0.4);
-        padding: 0.9rem 1.2rem;
-        font-size: 1rem;
+        background: var(--panel-bg);
+        border: 1.5px solid var(--glass-border);
+        border-radius: 10px;
+        color: var(--text-main);
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
     }
+
+    :root[data-theme="dark"] .auth-form .form-control {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .auth-form .form-control:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.15);
+        background: var(--card-bg);
+    }
+
     .btn-block {
         width: 100%;
-        padding: 1rem;
-        font-size: 1.1rem;
-        margin-top: 1rem;
+        padding: 0.85rem;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-top: 1.2rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(126, 34, 206, 0.2);
     }
+
+    .btn-block:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(126, 34, 206, 0.3);
+    }
+
     .auth-footer {
         text-align: center;
-        margin-top: 2rem;
-        font-size: 0.95rem;
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
         color: var(--text-muted);
+        border-top: 1px solid var(--glass-border);
+        padding-top: 1.5rem;
     }
+
     .auth-footer a {
-        color: var(--accent-secondary);
+        color: var(--accent-primary);
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 700;
         transition: color 0.3s;
     }
+
     .auth-footer a:hover {
-        color: var(--accent-primary);
+        color: var(--accent-secondary);
+        text-underline-offset: 4px;
         text-decoration: underline;
     }
+
     @keyframes fadeInScale {
-        0% { opacity: 0; transform: scale(0.95); }
-        100% { opacity: 1; transform: scale(1); }
+        0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 </style>
 {% endblock %}

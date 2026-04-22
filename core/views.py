@@ -129,8 +129,8 @@ def ats_checker_view(request):
             # Recommend Jobs based on Skills (Threshold 70%)
             jobs = recommend_jobs(skills, parsed_data.get('text', ''))
             
-            # Save recommended jobs
-            for job in jobs[:10]: # Top 10
+            # Save recommended jobs (Saving all 30 for high volume)
+            for job in jobs: 
                 JobRecommendation.objects.create(
                     user=request.user,
                     resume=resume_obj,

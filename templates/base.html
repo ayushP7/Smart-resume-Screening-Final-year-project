@@ -21,6 +21,18 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="logo-container" style="margin-bottom: 0;">
+            <h1 class="logo" style="font-size: 1.1rem;"><i class="fa-solid fa-microchip"></i> SRS</h1>
+        </div>
+        <button id="mobile-toggle" class="mobile-toggle">
+            <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+    </header>
+
+    <div class="overlay" id="sidebar-overlay"></div>
+
     <!-- Background animations -->
     <div class="bg-blob blob-1"></div>
     <div class="bg-blob blob-2"></div>
@@ -98,7 +110,30 @@
                 localStorage.setItem('theme', newTheme);
                 updateIcon(newTheme);
             });
+
+            // Mobile Sidebar Logic
+            const mobileToggle = document.getElementById('mobile-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const sidebarLinks = document.querySelectorAll('.nav-links a');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            }
+
+            mobileToggle.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            
+            // Close sidebar when clicking a link
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    if(sidebar.classList.contains('active')) toggleSidebar();
+                });
+            });
         });
     </script>
+
 </body>
 </html>
