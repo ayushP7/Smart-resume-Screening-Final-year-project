@@ -1,167 +1,394 @@
 {% extends 'base.html' %}
-
 {% block title %}Dashboard - Smart Resume Screening{% endblock %}
 
 {% block content %}
-
 {% if show_welcome %}
-<!-- Cinematic Welcome Overlay -->
 <div id="welcome-overlay">
     <div class="overlay-content">
         <h1 class="glitch-text">Smart Resume Screening</h1>
-        <div class="enter-prompt">
-            Press <span class="key-cap">ENTER</span> to begin
-        </div>
+        <div class="enter-prompt">Press <span class="key-cap">ENTER</span> to begin</div>
     </div>
 </div>
 {% endif %}
 
-<div class="dashboard-wrapper animate-in">
-    <!-- Header Section -->
-    <div class="dash-header" style="text-align: center; display: block; margin-bottom: 4rem;">
-        <div class="welcome-text">
-            <h2 style="font-size: 2.8rem; margin-bottom: 1rem;">Experience the Future of Recruitment</h2>
-            <p style="font-size: 1.2rem; max-width: 800px; margin: 0 auto; color: var(--text-muted);">Our enterprise-grade AI suite empowers candidates to dismantle recruitment barriers. Optimize, Match, and Get Hired with precision engineering.</p>
-        </div>
-    </div>
+<!-- Particle Canvas Background -->
+<canvas id="particle-canvas"></canvas>
 
-    <!-- Services Hub Grid -->
-    <div class="services-grid">
-        <!-- Service 1: ATS Checker -->
-        <div class="service-card glass-panel" data-accent>
-            <div class="service-icon-glow purple">
-                <i class="fa-solid fa-file-shield"></i>
+<div class="dash-root">
+
+    <!-- ===== HERO SECTION ===== -->
+    <section class="hero-section reveal">
+        <div class="hero-left">
+            <div class="hero-eyebrow"><span class="pulse-dot"></span> AI-Powered Career Suite</div>
+            <h1 class="hero-title">
+                Hello, <span class="grad-text">{{ request.user.get_short_name|default:request.user.username }}</span>.<br>
+                <span id="typewriter"></span><span class="cursor-blink">|</span>
+            </h1>
+            <p class="hero-sub">Your intelligent resume ecosystem — analyze, match, and land the role that's built for you.</p>
+            <div class="hero-actions">
+                <a href="{% url 'ats_checker' %}" class="btn btn-primary glow-btn">
+                    <i class="fa-solid fa-bolt"></i> Start ATS Scan
+                </a>
+                <a href="{% url 'jd_matcher' %}" class="btn btn-secondary">
+                    <i class="fa-solid fa-scale-balanced"></i> Match a JD
+                </a>
             </div>
-            <h3>ATS Analysis Engine</h3>
-            <p>Our neural parser dissects your resume architecture, identifying structural gaps and skill density to ensure you bypass automated filters with a perfect score.</p>
-            <ul class="service-features">
-                <li><i class="fa-solid fa-check"></i> Deep Structural Audit</li>
-                <li><i class="fa-solid fa-check"></i> Skill Density Mapping</li>
-                <li><i class="fa-solid fa-check"></i> Recruitment Viability Score</li>
-            </ul>
-            <a href="{% url 'ats_checker' %}" class="service-cta purple btn-secondary">Start Deep Scan <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-
-        <!-- Service 2: Job Recommendations -->
-        <div class="service-card glass-panel" data-accent>
-            <div class="service-icon-glow blue">
-                <i class="fa-solid fa-satellite-dish"></i>
+        <div class="hero-right">
+            <div class="score-orbit" id="score-orbit">
+                <svg class="orbit-ring" viewBox="0 0 200 200">
+                    <circle class="orbit-bg" cx="100" cy="100" r="85"/>
+                    <circle class="orbit-fill" id="orbit-fill" cx="100" cy="100" r="85"
+                            stroke-dasharray="0 534" stroke-dashoffset="0"
+                            transform="rotate(-90 100 100)"/>
+                </svg>
+                <div class="orbit-inner">
+                    <div class="orbit-score" id="orbit-score">0</div>
+                    <div class="orbit-label">ATS Score</div>
+                </div>
             </div>
-            <h3>Smart Recommender</h3>
-            <p>Skip the manual search. We aggregate live opportunities from LinkedIn and Naukri, filtered strictly by your extracted skill profile to maximize placement speed.</p>
-            <ul class="service-features">
-                <li><i class="fa-solid fa-check"></i> Multi-Portal Aggregation</li>
-                <li><i class="fa-solid fa-check"></i> Verified Skill Matching</li>
-                <li><i class="fa-solid fa-check"></i> Real-time Opportunity Feed</li>
-            </ul>
-            <a href="{% url 'ats_checker' %}" class="service-cta blue btn-secondary">Find Opportunities <i class="fa-solid fa-arrow-right"></i></a>
-        </div>
-
-        <!-- Service 3: JD Matcher -->
-        <div class="service-card glass-panel" data-accent>
-            <div class="service-icon-glow emerald">
-                <i class="fa-solid fa-scale-balanced"></i>
+            <div class="mini-stats">
+                <div class="mini-stat reveal-right">
+                    <i class="fa-solid fa-file-lines" style="color:#a855f7"></i>
+                    <div><span class="counter" data-target="{{ resumes.count }}">0</span><small>Resumes</small></div>
+                </div>
+                <div class="mini-stat reveal-right" style="animation-delay:.1s">
+                    <i class="fa-solid fa-briefcase" style="color:#3b82f6"></i>
+                    <div><span class="counter" data-target="{{ recommendations.count }}">0</span><small>Job Matches</small></div>
+                </div>
+                <div class="mini-stat reveal-right" style="animation-delay:.2s">
+                    <i class="fa-solid fa-code" style="color:#10b981"></i>
+                    <div><span class="counter" data-target="{{ matched_skills|length }}">0</span><small>Skills Found</small></div>
+                </div>
             </div>
-            <h3>Precision JD Matcher</h3>
-            <p>Battle-test your resume against specific job requirements. We provide a weighted multi-factor score including soft skills, education, and domain alignment.</p>
-            <ul class="service-features">
-                <li><i class="fa-solid fa-check"></i> Weighted Match Score</li>
-                <li><i class="fa-solid fa-check"></i> Missing Skill Breakdown</li>
-                <li><i class="fa-solid fa-check"></i> Experience Gap Analysis</li>
-            </ul>
-            <a href="{% url 'jd_matcher' %}" class="service-cta emerald btn-secondary">Analyze Compatibility <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-    </div>
+    </section>
 
-    <!-- RECENT RECOMMENDATIONS SECTION -->
+    <!-- ===== SKILLS STRIP ===== -->
+    {% if matched_skills %}
+    <section class="skills-strip reveal">
+        <div class="strip-label"><i class="fa-solid fa-microchip"></i> Detected Skills</div>
+        <div class="skills-ticker">
+            <div class="ticker-track">
+                {% for s in matched_skills %}
+                <span class="ticker-chip">{{ s }}</span>
+                {% endfor %}
+                {% for s in matched_skills %}
+                <span class="ticker-chip">{{ s }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== SERVICE CARDS ===== -->
+    <section class="services-section">
+        <h2 class="section-heading reveal">Core Services</h2>
+        <div class="services-grid">
+
+            <div class="svc-card reveal tilt-card" data-href="{% url 'ats_checker' %}">
+                <div class="svc-glow purple"></div>
+                <div class="svc-icon purple-icon"><i class="fa-solid fa-file-shield"></i></div>
+                <h3>ATS Engine</h3>
+                <p>Neural parser that dissects your resume, scoring structural depth, keyword density, and ATS viability.</p>
+                <ul class="svc-list">
+                    <li><i class="fa-solid fa-check"></i> Deep Structural Audit</li>
+                    <li><i class="fa-solid fa-check"></i> Skill Density Mapping</li>
+                    <li><i class="fa-solid fa-check"></i> Actionable Fixes</li>
+                </ul>
+                <div class="svc-cta">Start Scan <i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+
+            <div class="svc-card reveal tilt-card" data-href="{% url 'ats_checker' %}" style="animation-delay:.1s">
+                <div class="svc-glow blue"></div>
+                <div class="svc-icon blue-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+                <h3>Smart Recommender</h3>
+                <p>Aggregates live opportunities from LinkedIn & Naukri, filtered strictly by your extracted skill profile.</p>
+                <ul class="svc-list">
+                    <li><i class="fa-solid fa-check"></i> Multi-Portal Feed</li>
+                    <li><i class="fa-solid fa-check"></i> Skill-Verified Matches</li>
+                    <li><i class="fa-solid fa-check"></i> One-Click Apply</li>
+                </ul>
+                <div class="svc-cta">Find Jobs <i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+
+            <div class="svc-card reveal tilt-card" data-href="{% url 'jd_matcher' %}" style="animation-delay:.2s">
+                <div class="svc-glow emerald"></div>
+                <div class="svc-icon emerald-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                <h3>JD Matcher</h3>
+                <p>Battle-test your resume against any job description. Get a weighted score across 5 key dimensions.</p>
+                <ul class="svc-list">
+                    <li><i class="fa-solid fa-check"></i> Weighted Match Score</li>
+                    <li><i class="fa-solid fa-check"></i> Gap Analysis</li>
+                    <li><i class="fa-solid fa-check"></i> Soft Skill Detection</li>
+                </ul>
+                <div class="svc-cta">Match Now <i class="fa-solid fa-arrow-right"></i></div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ===== RECENT MATCHES ===== -->
     {% if recommendations %}
-    <div class="recommendation-container" style="margin-top: 5rem;">
-        <div class="section-header" style="margin-bottom: 2rem;">
-            <h2 style="font-size: 2rem; font-weight: 800;"><i class="fa-solid fa-satellite-dish" style="color: var(--accent-secondary);"></i> Recent Smart Matches</h2>
-            <p class="text-muted">Direct opportunities found during your last analysis</p>
+    <section class="matches-section reveal">
+        <div class="matches-header">
+            <h2 class="section-heading" style="margin-bottom:0">Recent Smart Matches</h2>
+            <span class="badge-pill">{{ recommendations.count }} Found</span>
         </div>
-        
-        <div class="recommendation-list">
-            {% for rec in recommendations %}
-            <div class="job-card">
-                <div class="job-info">
-                    <h4 class="job-title">{{ rec.job_title }}</h4>
-                    <div class="job-company">
-                        <i class="fa-solid fa-building"></i> {{ rec.company_name }}
+        <div class="matches-list">
+            {% for rec in recommendations|slice:":8" %}
+            <a href="{{ rec.job_url }}" target="_blank" class="match-row reveal">
+                <div class="match-left">
+                    <div class="match-icon"><i class="fa-solid fa-building"></i></div>
+                    <div>
+                        <div class="match-title">{{ rec.job_title }}</div>
+                        <div class="match-company">{{ rec.company_name }}</div>
                     </div>
                 </div>
-                <div class="job-meta">
-                    <div class="match-badge {% if rec.match_score >= 90 %}high{% else %}mid{% endif %}">
-                        {{ rec.match_score }}% Match
+                <div class="match-right">
+                    <div class="match-score {% if rec.match_score >= 90 %}score-high{% else %}score-mid{% endif %}">
+                        {{ rec.match_score }}%
                     </div>
-                    <a href="{{ rec.job_url }}" target="_blank" class="btn btn-primary" style="padding: 0.5rem 1.2rem; border-radius: 50px;">
-                        Apply Now <i class="fa-solid fa-up-right-from-square"></i>
-                    </a>
+                    <div class="match-apply">Apply <i class="fa-solid fa-up-right-from-square"></i></div>
                 </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
-    </div>
+    </section>
     {% endif %}
+
 </div>
 
 <style>
-    /* Specific overrides for dashboard service components */
-    .service-features {
-        list-style: none; padding: 0; margin-bottom: 2.5rem; text-align: left; width: 100%;
-    }
-    .service-features li {
-        margin-bottom: 0.8rem; color: var(--text-main); font-size: 0.9rem; display: flex; align-items: center; gap: 0.8rem;
-    }
-    .service-features li i { color: #4ade80; font-size: 0.8rem; }
-    
-    .service-cta {
-        margin-top: auto; padding: 1rem 2rem; border-radius: 50px; text-decoration: none; font-weight: 600;
-        display: flex; align-items: center; gap: 0.8rem; transition: all 0.3s; border: 1px solid var(--glass-border);
-    }
-    .service-cta.purple { color: #a855f7; }
-    .service-cta.blue { color: #3b82f6; }
-    .service-cta.emerald { color: #10b981; }
+/* ─── Canvas ─── */
+#particle-canvas { position:fixed; inset:0; z-index:-1; pointer-events:none; }
 
-    /* Splash Screen Styles */
-    #welcome-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a0f 100%);
-        z-index: 10000; display: flex; justify-content: center; align-items: center;
-        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    #welcome-overlay.hidden { opacity: 0; visibility: hidden; transform: scale(1.1); }
-    .glitch-text {
-        font-size: 5rem; font-weight: 800; background: linear-gradient(to right, #fff, #94a3b8);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 2rem;
-    }
-    .enter-prompt {
-        font-size: 1.5rem; color: #64748b; display: flex; align-items: center; justify-content: center; gap: 1rem;
-        animation: pulse 2s infinite;
-    }
-    .key-cap {
-        background: #334155; padding: 0.2rem 0.8rem; border-radius: 6px; border: 1px solid #475569;
-        box-shadow: 0 4px 0 #1e293b; color: white; font-weight: bold;
-    }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+/* ─── Root ─── */
+.dash-root { max-width: 1200px; margin: 0 auto; padding: 2rem 0 5rem; }
+
+/* ─── Hero ─── */
+.hero-section { display:grid; grid-template-columns:1fr 420px; gap:4rem; align-items:center; padding:3rem 0 5rem; }
+.hero-eyebrow { display:flex; align-items:center; gap:.6rem; color:var(--text-muted); font-size:.85rem; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:1.5rem; }
+.pulse-dot { width:8px; height:8px; background:#10b981; border-radius:50%; animation: pulsate 1.5s infinite; }
+@keyframes pulsate { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.7)} 50%{box-shadow:0 0 0 8px rgba(16,185,129,0)} }
+
+.hero-title { font-size:3.5rem; font-weight:900; line-height:1.15; letter-spacing:-1.5px; margin-bottom:1.5rem; }
+.grad-text { background:linear-gradient(135deg, #a855f7, #3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+#typewriter { font-size:2rem; font-weight:700; color:var(--text-muted); }
+.cursor-blink { font-size:2rem; color:var(--accent-primary); animation:blink .8s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.hero-sub { font-size:1.1rem; color:var(--text-muted); max-width:500px; line-height:1.7; margin-bottom:2.5rem; }
+.hero-actions { display:flex; gap:1rem; flex-wrap:wrap; }
+.glow-btn { box-shadow: 0 0 20px rgba(168,85,247,.4); animation: glow-pulse 3s infinite; }
+@keyframes glow-pulse { 0%,100%{box-shadow:0 0 20px rgba(168,85,247,.4)} 50%{box-shadow:0 0 35px rgba(168,85,247,.7)} }
+
+/* ─── Score Orbit ─── */
+.hero-right { display:flex; flex-direction:column; align-items:center; gap:2rem; }
+.score-orbit { position:relative; width:220px; height:220px; }
+.orbit-ring { width:100%; height:100%; }
+.orbit-bg { fill:none; stroke:rgba(255,255,255,.06); stroke-width:12; }
+:root[data-theme="light"] .orbit-bg { stroke:#e2e8f0; }
+.orbit-fill { fill:none; stroke-width:12; stroke-linecap:round; stroke:url(#orbitGrad); transition:stroke-dasharray 2.5s cubic-bezier(.17,.67,.83,.67); }
+.orbit-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.orbit-score { font-size:4rem; font-weight:900; background:linear-gradient(135deg,#a855f7,#3b82f6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; letter-spacing:-2px; }
+.orbit-label { font-size:.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:2px; }
+
+.mini-stats { display:flex; flex-direction:column; gap:1rem; width:100%; }
+.mini-stat { display:flex; align-items:center; gap:1rem; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:16px; padding:1rem 1.5rem; transition:transform .3s; cursor:default; }
+.mini-stat:hover { transform:translateX(6px); }
+.mini-stat i { font-size:1.5rem; }
+.mini-stat small { display:block; color:var(--text-muted); font-size:.8rem; }
+.mini-stat span { font-size:1.5rem; font-weight:800; display:block; }
+
+/* ─── Skills Strip ─── */
+.skills-strip { display:flex; align-items:center; gap:2rem; margin:0 0 4rem; overflow:hidden; padding:1.5rem 0; border-top:1px solid var(--glass-border); border-bottom:1px solid var(--glass-border); }
+.strip-label { white-space:nowrap; font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-muted); flex-shrink:0; }
+.skills-ticker { flex:1; overflow:hidden; }
+.ticker-track { display:flex; gap:1rem; animation:ticker 20s linear infinite; width:max-content; }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.ticker-chip { background:rgba(168,85,247,.12); border:1px solid rgba(168,85,247,.25); color:#a855f7; padding:.4rem 1.2rem; border-radius:50px; font-size:.85rem; font-weight:600; white-space:nowrap; }
+:root[data-theme="light"] .ticker-chip { background:rgba(124,58,237,.08); }
+
+/* ─── Services ─── */
+.section-heading { font-size:1.8rem; font-weight:800; margin-bottom:2rem; }
+.services-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2rem; }
+
+.svc-card {
+    background:var(--glass-bg); border:1px solid var(--glass-border);
+    border-radius:24px; padding:2.5rem 2rem; position:relative; overflow:hidden;
+    cursor:pointer; transform-style:preserve-3d; transition:box-shadow .3s;
+    display:flex; flex-direction:column;
+}
+.svc-card:hover { box-shadow:0 25px 60px rgba(0,0,0,.3); }
+.svc-glow { position:absolute; width:200px; height:200px; border-radius:50%; top:-60px; right:-60px; filter:blur(60px); opacity:.3; pointer-events:none; }
+.svc-glow.purple { background:#a855f7; }
+.svc-glow.blue   { background:#3b82f6; }
+.svc-glow.emerald{ background:#10b981; }
+
+.svc-icon { width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; margin-bottom:1.5rem; }
+.purple-icon { background:rgba(168,85,247,.15); color:#a855f7; }
+.blue-icon   { background:rgba(59,130,246,.15);  color:#3b82f6; }
+.emerald-icon{ background:rgba(16,185,129,.15);  color:#10b981; }
+
+.svc-card h3 { font-size:1.3rem; font-weight:700; margin-bottom:.8rem; }
+.svc-card p  { font-size:.9rem; color:var(--text-muted); line-height:1.7; margin-bottom:1.5rem; }
+.svc-list { list-style:none; padding:0; margin-bottom:2rem; flex:1; }
+.svc-list li { font-size:.88rem; padding:.4rem 0; display:flex; align-items:center; gap:.7rem; }
+.svc-list li i { color:#4ade80; font-size:.75rem; }
+.svc-cta { display:flex; align-items:center; gap:.6rem; font-weight:700; font-size:.9rem; color:var(--accent-primary); margin-top:auto; }
+
+/* ─── Matches ─── */
+.matches-section { margin-top:4rem; }
+.matches-header { display:flex; align-items:center; gap:1rem; margin-bottom:2rem; }
+.badge-pill { background:linear-gradient(135deg,var(--accent-primary),var(--accent-secondary)); color:#fff; padding:.3rem .9rem; border-radius:50px; font-size:.8rem; font-weight:700; }
+.matches-list { display:flex; flex-direction:column; gap:.75rem; }
+.match-row {
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:18px;
+    padding:1.2rem 1.8rem; text-decoration:none; color:var(--text-main);
+    transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+.match-row:hover { transform:translateX(8px); border-color:var(--accent-secondary); background:rgba(59,130,246,.04); }
+.match-left { display:flex; align-items:center; gap:1rem; }
+.match-icon { width:42px; height:42px; background:var(--panel-bg); border:1px solid var(--glass-border); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
+.match-title { font-weight:700; font-size:1rem; }
+.match-company { font-size:.85rem; color:var(--text-muted); margin-top:.2rem; }
+.match-right { display:flex; align-items:center; gap:1.5rem; }
+.match-score { font-weight:900; font-size:1.2rem; }
+.score-high { color:#4ade80; }
+.score-mid  { color:#facc15; }
+.match-apply { font-size:.85rem; font-weight:600; color:var(--accent-secondary); display:flex; align-items:center; gap:.4rem; }
+
+/* ─── Reveal Animations ─── */
+.reveal { opacity:0; transform:translateY(30px); transition:opacity .7s ease, transform .7s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+.reveal-right { opacity:0; transform:translateX(20px); transition:opacity .6s ease, transform .6s ease; }
+.reveal-right.visible { opacity:1; transform:translateX(0); }
+
+/* ─── Splash ─── */
+#welcome-overlay { position:fixed; inset:0; background:radial-gradient(circle at center,#1a1a2e,#0a0a0f); z-index:10000; display:flex; justify-content:center; align-items:center; transition:all .6s; }
+#welcome-overlay.hidden { opacity:0; visibility:hidden; transform:scale(1.08); }
+.glitch-text { font-size:5rem; font-weight:900; background:linear-gradient(to right,#fff,#94a3b8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:2rem; }
+.enter-prompt { font-size:1.4rem; color:#64748b; display:flex; align-items:center; justify-content:center; gap:1rem; animation:epulse 2s infinite; }
+.key-cap { background:#334155; padding:.2rem .8rem; border-radius:6px; border:1px solid #475569; box-shadow:0 4px 0 #1e293b; color:#fff; font-weight:700; }
+@keyframes epulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* ─── Responsive ─── */
+@media (max-width:1024px) {
+    .hero-section { grid-template-columns:1fr; gap:3rem; }
+    .hero-right { flex-direction:row; flex-wrap:wrap; justify-content:center; }
+    .services-grid { grid-template-columns:1fr 1fr; }
+}
+@media (max-width:700px) {
+    .hero-title { font-size:2.4rem; }
+    .services-grid { grid-template-columns:1fr; }
+    .match-row { flex-direction:column; align-items:flex-start; gap:1rem; }
+}
 </style>
 
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+</svg>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const overlay = document.getElementById('welcome-overlay');
-    
-    if(overlay) {
-        document.addEventListener('keydown', function hideOverlay(e) {
-            if(e.key === 'Enter') {
-                overlay.classList.add('hidden');
-                setTimeout(() => overlay.remove(), 800);
-                document.removeEventListener('keydown', hideOverlay);
-            }
-        });
+/* ── Particles ── */
+(function(){
+  const c = document.getElementById('particle-canvas');
+  const ctx = c.getContext('2d');
+  let W, H, particles = [];
+  const isDark = () => document.documentElement.getAttribute('data-theme') !== 'light';
+  function resize(){ W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  class P {
+    constructor(){ this.reset(); }
+    reset(){ this.x=Math.random()*W; this.y=Math.random()*H; this.r=Math.random()*1.5+.5; this.vx=(Math.random()-.5)*.4; this.vy=(Math.random()-.5)*.4; this.a=Math.random(); }
+    draw(){
+      ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+      ctx.fillStyle = isDark() ? `rgba(168,85,247,${this.a*.6})` : `rgba(124,58,237,${this.a*.2})`;
+      ctx.fill();
     }
+    update(){ this.x+=this.vx; this.y+=this.vy; if(this.x<0||this.x>W||this.y<0||this.y>H) this.reset(); }
+  }
+  for(let i=0;i<80;i++) particles.push(new P());
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{p.update();p.draw();});
+    particles.forEach((a,i)=>{ particles.slice(i+1).forEach(b=>{ const d=Math.hypot(a.x-b.x,a.y-b.y); if(d<120){ ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.strokeStyle=isDark()?`rgba(168,85,247,${.15*(1-d/120)})`:`rgba(124,58,237,${.08*(1-d/120)})`; ctx.lineWidth=.6; ctx.stroke(); } }); });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── Typewriter ── */
+(function(){
+  const texts = ["Optimize your resume.", "Beat ATS filters.", "Land your dream role."];
+  let ti=0, ci=0, deleting=false;
+  const el = document.getElementById('typewriter');
+  if(!el) return;
+  function type(){
+    const cur = texts[ti];
+    el.textContent = deleting ? cur.slice(0,ci--) : cur.slice(0,ci++);
+    if(!deleting && ci>cur.length){ setTimeout(()=>{deleting=true;},1800); }
+    else if(deleting && ci<0){ deleting=false; ti=(ti+1)%texts.length; ci=0; }
+    setTimeout(type, deleting?50:80);
+  }
+  type();
+})();
+
+/* ── ATS Score Orbit ── */
+(function(){
+  const score = {{ ats_score|default:0 }};
+  const fill = document.getElementById('orbit-fill');
+  const scoreEl = document.getElementById('orbit-score');
+  if(!fill) return;
+  const circ = 2*Math.PI*85;
+  let cur=0;
+  const interval = setInterval(()=>{
+    if(cur>=score){ clearInterval(interval); return; }
+    cur++;
+    scoreEl.textContent = cur;
+    fill.setAttribute('stroke-dasharray', `${(cur/100)*circ} ${circ}`);
+  }, 25);
+})();
+
+/* ── Counters ── */
+document.querySelectorAll('.counter').forEach(el=>{
+  const target = parseInt(el.dataset.target)||0;
+  let cur=0;
+  const interval = setInterval(()=>{ if(cur>=target){clearInterval(interval);return;} cur++; el.textContent=cur; },40);
 });
+
+/* ── Scroll Reveal ── */
+const observer = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+}, {threshold:.1});
+document.querySelectorAll('.reveal, .reveal-right').forEach(el=>observer.observe(el));
+
+/* ── 3D Card Tilt ── */
+document.querySelectorAll('.tilt-card').forEach(card=>{
+  card.addEventListener('mousemove', e=>{
+    const r=card.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform=`rotateY(${x*12}deg) rotateX(${-y*12}deg) scale(1.03)`;
+  });
+  card.addEventListener('mouseleave',()=>{ card.style.transform=''; });
+  card.addEventListener('click',()=>{ window.location.href = card.dataset.href; });
+});
+
+/* ── Splash ── */
+const overlay = document.getElementById('welcome-overlay');
+if(overlay){
+  document.addEventListener('keydown', function h(e){
+    if(e.key==='Enter'){ overlay.classList.add('hidden'); setTimeout(()=>overlay.remove(),700); document.removeEventListener('keydown',h); }
+  });
+}
 </script>
 {% endblock %}
